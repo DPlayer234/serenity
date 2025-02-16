@@ -4145,11 +4145,11 @@ impl Http {
         let code = crate::utils::parse_invite(code);
 
         let mut params = vec![
-            ("member_counts", member_counts.to_string()),
-            ("expiration", expiration.to_string()),
+            ("with_counts", member_counts.to_string()),
+            ("with_expiration", expiration.to_string()),
         ];
         if let Some(event_id) = event_id {
-            params.push(("event_id", event_id.to_string()));
+            params.push(("guild_scheduled_event_id", event_id.to_string()));
         }
 
         self.fire(Request {
