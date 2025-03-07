@@ -118,7 +118,7 @@ pub struct Message {
     /// The thread that was started from this message, includes thread member object.
     pub thread: Option<GuildChannel>,
     /// The components of this message
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_components")]
     pub components: Vec<ActionRow>,
     /// Array of message sticker item objects.
     #[serde(default)]
@@ -149,6 +149,60 @@ pub struct Message {
     ///
     /// Only present in [`MessageCreateEvent`].
     pub poll: Option<Box<Poll>>,
+}
+
+// Custom deserialize function to deserialize components safely without knocking the whole message
+// out when new components are found but not supported.
+fn deserialize_components<'de, D>(deserializer: D) -> Result<Vec<ActionRow>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    struct MinComponent {
+        #[serde(rename = "type")]
+        kind: u8,
+    }
+
+    struct ComponentsVisitor;
+
+    impl<'de> Visitor<'de> for ComponentsVisitor {
+        type Value = Vec<ActionRow>;
+
+        fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            formatter.write_str("a sequence of ActionRow elements")
+        }
+
+        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+        where
+            A: serde::de::SeqAccess<'de>,
+        {
+            let mut components = Vec::with_capacity(seq.size_hint().unwrap_or_default());
+
+            while let Some(raw) = seq.next_element::<&serde_json::value::RawValue>()? {
+                // We deserialize only the `kind` field to determine the component type.
+                // We later use this to check if its a supported component before deserializing the
+                // entire payload.
+                let min_component =
+                    MinComponent::deserialize(raw).map_err(serde::de::Error::custom)?;
+
+                // Action rows are the only top level component supported in serenity at this time.
+                if min_component.kind == 1 {
+                    components.push(ActionRow::deserialize(raw).map_err(serde::de::Error::custom)?);
+                } else {
+                    // Top level component is not an action row and cannot be supported on
+                    // serenity@current without breaking changes, so we skip them.
+                    tracing::debug!(
+                        "Skipping component with unsupported kind: {}",
+                        min_component.kind
+                    );
+                }
+            }
+
+            Ok(components)
+        }
+    }
+
+    deserializer.deserialize_seq(ComponentsVisitor)
 }
 
 #[cfg(feature = "model")]
@@ -1211,7 +1265,7 @@ pub struct MessageSnapshot {
     #[serde(rename = "type")]
     pub kind: MessageType,
     pub flags: Option<MessageFlags>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_components")]
     pub components: Vec<ActionRow>,
     #[serde(default)]
     pub sticker_items: Vec<StickerItem>,
