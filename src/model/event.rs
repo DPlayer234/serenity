@@ -1020,10 +1020,12 @@ impl<'de> Deserialize<'de> for GatewayEvent {
                         match self {
                             Self {
                                 ty: ty @ Some(_), ..
-                            } => seed.deserialize(ty.take().unwrap().into_deserializer()),
+                            } => seed.deserialize(
+                                ty.take().expect("always Some here").into_deserializer(),
+                            ),
                             Self {
                                 data: data @ Some(_), ..
-                            } => seed.deserialize(data.take().unwrap()),
+                            } => seed.deserialize(data.take().expect("always Some here")),
                             _ => Err(serde_json::Error::custom("no more fields to read")),
                         }
                     }
