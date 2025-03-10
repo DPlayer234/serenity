@@ -4,9 +4,10 @@
 //! Discord documentation for the event.
 
 use serde::Serialize;
-use serde::de::Error as DeError;
+use serde::de::{DeserializeSeed, Error as DeError, IntoDeserializer, MapAccess};
 use serde_json::value::RawValue;
 use strum::{EnumCount, IntoStaticStr, VariantNames};
+use tracing::warn;
 
 use crate::constants::Opcode;
 use crate::internal::utils::lending_for_each;
@@ -971,7 +972,7 @@ fn raw_value_len(val: &RawValue) -> usize {
 // Manual impl needed to emulate integer enum tags
 impl<'de> Deserialize<'de> for GatewayEvent {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> StdResult<Self, D::Error> {
-        #[derive(Debug, Clone, Deserialize)]
+        #[derive(Debug, Clone, Copy, Deserialize)]
         struct GatewayEventRaw<'a> {
             op: Opcode,
             #[serde(rename = "s")]
@@ -982,27 +983,81 @@ impl<'de> Deserialize<'de> for GatewayEvent {
             ty: Option<&'a str>,
         }
 
-        let raw_data = <&RawValue>::deserialize(deserializer)?;
+        impl<'de> Deserializer<'de> for GatewayEventRaw<'de> {
+            type Error = serde_json::Error;
 
-        let raw = GatewayEventRaw::deserialize(raw_data).map_err(DeError::custom)?;
+            fn deserialize_any<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+            where
+                V: Visitor<'de>,
+            {
+                struct EventRawAccess<'a> {
+                    data: Option<&'a RawValue>,
+                    ty: Option<&'a str>,
+                }
+
+                impl<'de> MapAccess<'de> for EventRawAccess<'de> {
+                    type Error = serde_json::Error;
+
+                    fn next_key_seed<K>(&mut self, seed: K) -> Result<Option<K::Value>, Self::Error>
+                    where
+                        K: DeserializeSeed<'de>,
+                    {
+                        match self {
+                            Self {
+                                ty: Some(_), ..
+                            } => seed.deserialize("t".into_deserializer()).map(Some),
+                            Self {
+                                data: Some(_), ..
+                            } => seed.deserialize("d".into_deserializer()).map(Some),
+                            _ => Ok(None),
+                        }
+                    }
+
+                    fn next_value_seed<V>(&mut self, seed: V) -> Result<V::Value, Self::Error>
+                    where
+                        V: DeserializeSeed<'de>,
+                    {
+                        match self {
+                            Self {
+                                ty: ty @ Some(_), ..
+                            } => seed.deserialize(ty.take().unwrap().into_deserializer()),
+                            Self {
+                                data: data @ Some(_), ..
+                            } => seed.deserialize(data.take().unwrap()),
+                            _ => Err(serde_json::Error::custom("no more fields to read")),
+                        }
+                    }
+                }
+
+                visitor.visit_map(EventRawAccess {
+                    ty: self.ty,
+                    data: Some(self.data),
+                })
+            }
+
+            forward_to_deserialize_any! {
+                bool i8 i16 i32 i64 i128 u8 u16 u32 u64 u128 f32 f64 char str string
+                bytes byte_buf option unit unit_struct newtype_struct seq tuple
+                tuple_struct map struct enum identifier ignored_any
+            }
+        }
+
+        let raw = GatewayEventRaw::deserialize(deserializer).map_err(DeError::custom)?;
 
         Ok(match raw.op {
-            Opcode::Dispatch => {
-                if raw.ty.is_none() {
-                    return Err(DeError::missing_field("t"));
-                }
-
-                Self::Dispatch {
-                    seq: raw.seq.ok_or_else(|| DeError::missing_field("s"))?,
-                    event: {
-                        Box::new(match Event::deserialize(raw_data) {
-                            Ok(event) => DeserializedEvent::Success(event),
-                            Err(_) => DeserializedEvent::Unknown(
-                                UnknownEvent::deserialize(raw_data).map_err(DeError::custom)?,
-                            ),
-                        })
-                    },
-                }
+            Opcode::Dispatch => Self::Dispatch {
+                seq: raw.seq.ok_or_else(|| DeError::missing_field("s"))?,
+                event: {
+                    Box::new(match Event::deserialize(raw) {
+                        Ok(event) => DeserializedEvent::Success(event),
+                        Err(err) => {
+                            warn!("Cannot deserialize Event: {err:?}");
+                            DeserializedEvent::Unknown(
+                                UnknownEvent::deserialize(raw).map_err(DeError::custom)?,
+                            )
+                        },
+                    })
+                },
             },
             Opcode::Heartbeat => Self::Heartbeat,
             Opcode::InvalidSession => {
