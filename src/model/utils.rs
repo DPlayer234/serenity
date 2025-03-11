@@ -450,3 +450,62 @@ where
         })
         .collect()
 }
+
+// A function used for deserializing components within a MessageUpdateEvent.
+// Due to discord now sending the whole message payload, we don't need to distinguish between None
+// and empty, as such we always return Some.
+pub fn optional_deserialize_components<'de, D>(
+    deserializer: D,
+) -> Result<Option<Vec<ActionRow>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    deserialize_components(deserializer).map(Some)
+}
+
+// Custom deserialize function to deserialize components safely without knocking the whole message
+// out when new components are found but not supported.
+pub fn deserialize_components<'de, D>(deserializer: D) -> Result<Vec<ActionRow>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    struct ComponentsVisitor;
+
+    impl<'de> Visitor<'de> for ComponentsVisitor {
+        type Value = Vec<ActionRow>;
+
+        fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            formatter.write_str("a sequence of ActionRow elements")
+        }
+
+        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+        where
+            A: serde::de::SeqAccess<'de>,
+        {
+            let mut components = Vec::with_capacity(seq.size_hint().unwrap_or_default());
+
+            while let Some(map) = seq.next_element::<JsonMap>()? {
+                // We deserialize only the `kind` field to determine the component type.
+                // We later use this to check if its a supported component before deserializing the
+                // entire payload.
+                let raw_kind =
+                    map.get("type").ok_or_else(|| DeError::missing_field("type"))?.clone();
+                let kind: i64 = deserialize_val(raw_kind)?;
+
+                // Action rows are the only top level component supported in serenity at this time.
+                if kind == 1 {
+                    let value = Value::from(map);
+                    components.push(ActionRow::deserialize(value).map_err(DeError::custom)?);
+                } else {
+                    // Top level component is not an action row and cannot be supported on
+                    // serenity@current without breaking changes, so we skip them.
+                    tracing::debug!("Skipping component with unsupported kind: {kind}");
+                }
+            }
+
+            Ok(components)
+        }
+    }
+
+    deserializer.deserialize_seq(ComponentsVisitor)
+}
