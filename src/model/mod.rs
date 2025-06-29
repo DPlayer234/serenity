@@ -62,7 +62,6 @@ pub use self::timestamp::Timestamp;
 /// use serenity::model::prelude::*;
 /// ```
 pub mod prelude {
-    pub(crate) use serde::de::Visitor;
     pub(crate) use serde::{Deserialize, Deserializer};
 
     pub use super::guild::automod::EventType as AutomodEventType;
