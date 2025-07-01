@@ -24,6 +24,8 @@ pub struct EditWebhookMessage<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     embeds: Option<Cow<'a, [CreateEmbed<'a>]>>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    flags: Option<MessageFlags>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     allowed_mentions: Option<CreateAllowedMentions<'a>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) components: Option<Cow<'a, [CreateComponent<'a>]>>,
@@ -113,6 +115,12 @@ impl<'a> EditWebhookMessage<'a> {
     }
 
     super::button_and_select_menu_convenience_methods!(self.components);
+
+    /// Sets the flags for the message.
+    pub fn flags(mut self, flags: MessageFlags) -> Self {
+        self.flags = Some(flags);
+        self
+    }
 
     /// Sets attachments, see [`EditAttachments`] for more details.
     pub fn attachments(mut self, attachments: EditAttachments<'a>) -> Self {
