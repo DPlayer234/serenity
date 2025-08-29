@@ -205,6 +205,7 @@ impl CacheUpdate for GuildMemberUpdateEvent {
                 member.deaf.clone_from(&self.deaf);
                 member.mute.clone_from(&self.mute);
                 member.avatar.clone_from(&self.avatar);
+                member.banner.clone_from(&self.banner);
                 member.communication_disabled_until.clone_from(&self.communication_disabled_until);
                 member.unusual_dm_activity_until.clone_from(&self.unusual_dm_activity_until);
 
@@ -226,6 +227,7 @@ impl CacheUpdate for GuildMemberUpdateEvent {
                     premium_since: self.premium_since,
                     permissions: None,
                     avatar: self.avatar,
+                    banner: self.banner,
                     communication_disabled_until: self.communication_disabled_until,
                     flags: GuildMemberFlags::default(),
                     unusual_dm_activity_until: self.unusual_dm_activity_until,
@@ -460,6 +462,7 @@ impl CacheUpdate for PresenceUpdateEvent {
                         premium_since: None,
                         permissions: None,
                         avatar: None,
+                        banner: None,
                         communication_disabled_until: None,
                         flags: GuildMemberFlags::default(),
                         unusual_dm_activity_until: None,
