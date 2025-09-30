@@ -16,18 +16,13 @@ mod check;
 
 pub use self::check::*;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 #[non_exhaustive]
 pub enum OnlyIn {
     Dm,
     Guild,
+    #[default]
     None,
-}
-
-impl Default for OnlyIn {
-    fn default() -> Self {
-        Self::None
-    }
 }
 
 #[derive(Debug, Default, PartialEq)]

@@ -311,7 +311,7 @@ fn parse_cmd<'a>(
             };
         }
 
-        Err(ParseError::UnrecognisedCommand(Some(n.to_string())))
+        Err(ParseError::UnrecognisedCommand(Some(n)))
     }
     .boxed()
 }
