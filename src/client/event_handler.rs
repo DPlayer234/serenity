@@ -327,6 +327,23 @@ event_handler! {
     /// Provides the context of the shard and the event information about the update.
     ShardStageUpdate { event: ShardStageUpdateEvent } => async fn shard_stage_update(&self, ctx: Context);
 
+    /// Dispatched when the data for soundboard sounds is requested.
+    ///
+    /// Provides the guild's id and the data.
+    SoundboardSounds { event: SoundboardSoundsEvent } => async fn soundboard_sounds(&self, ctx: Context);
+
+    /// Dispatched when a soundboard sound is created.
+    SoundboardSoundCreate { event: SoundboardSoundCreateEvent } => async fn soundboard_sound_create(&self, ctx: Context);
+
+    /// Dispatched when a soundboard sound is updated.
+    SoundboardSoundUpdate { event: SoundboardSoundUpdateEvent } => async fn soundboard_sound_update(&self, ctx: Context);
+
+    /// Dispatched when multiple soundboard sounds at once are updated.
+    SoundboardSoundsUpdate { event: SoundboardSoundsUpdateEvent } => async fn soundboard_sounds_update(&self, ctx: Context);
+
+    /// Dispatched when a soundboard sound is deleted.
+    SoundboardSoundDelete { event: SoundboardSoundDeleteEvent } => async fn soundboard_sound_delete(&self, ctx: Context);
+
     /// Dispatched when a user starts typing.
     TypingStart { event: TypingStartEvent } => async fn typing_start(&self, ctx: Context);
 
