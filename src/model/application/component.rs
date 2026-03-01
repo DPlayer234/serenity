@@ -689,7 +689,8 @@ enum_number! {
 
 /// A select menu component.
 ///
-/// Discord docs: [String Select], [User Select], [Role Select], [Mentionable Select], [Channel Select].
+/// Discord docs: [String Select], [User Select], [Role Select], [Mentionable Select], [Channel
+/// Select].
 ///
 /// [String Select]: https://docs.discord.com/developers/components/reference#string-select
 /// [User Select]: https://docs.discord.com/developers/components/reference#user-select
