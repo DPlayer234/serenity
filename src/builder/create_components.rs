@@ -168,7 +168,7 @@ pub struct CreateTextDisplay<'a> {
 impl<'a> CreateTextDisplay<'a> {
     /// Creates a new text display component.
     ///
-    /// Note: All components on a message shares the same **4000** character limit.
+    /// Note: All components on a message share the same **4000** character limit.
     pub fn new(content: impl Into<Cow<'a, str>>) -> Self {
         CreateTextDisplay {
             kind: ComponentType::TextDisplay,
@@ -179,7 +179,7 @@ impl<'a> CreateTextDisplay<'a> {
     /// Sets the content of this text display component. Replaces the current value as set in
     /// [`Self::new`].
     ///
-    /// Note: All components on a message shares the same **4000** character limit.
+    /// Note: All components on a message share the same **4000** character limit.
     #[must_use]
     pub fn content(mut self, content: impl Into<Cow<'a, str>>) -> Self {
         self.content = content.into();
@@ -284,7 +284,7 @@ impl<'a> CreateMediaGallery<'a> {
     /// Sets the items of the gallery. Replaces the current value as set in [`Self::new`].
     ///
     /// **Note**: This will replace all existing items. Use [`Self::add_item()`] to add additional
-    /// items
+    /// items.
     pub fn items(mut self, items: impl Into<Cow<'a, [CreateMediaGalleryItem<'a>]>>) -> Self {
         self.items = items.into();
         self
@@ -368,7 +368,7 @@ pub struct CreateFile<'a> {
 }
 
 impl<'a> CreateFile<'a> {
-    /// Create a new builder for the file component. Refer to this builders documentation for
+    /// Create a new builder for the file component. Refer to this builder's documentation for
     /// limits.
     pub fn new(file: CreateUnfurledMediaItem<'a>) -> Self {
         CreateFile {
@@ -378,8 +378,8 @@ impl<'a> CreateFile<'a> {
         }
     }
 
-    // Only supports `attachment://filename.extension` format, refer to this builders documentation
-    // for more details. Replaces the current value as set in [`Self::new`].
+    /// Only supports `attachment://filename.extension` format. Refer to this builder's
+    /// documentation for more details. Replaces the current value as set in [`Self::new`].
     pub fn file(mut self, file: CreateUnfurledMediaItem<'a>) -> Self {
         self.file = file;
         self
@@ -398,32 +398,38 @@ impl<'a> CreateFile<'a> {
 pub struct CreateSeparator {
     #[serde(rename = "type")]
     kind: ComponentType,
-    divider: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
-    spacing: Option<Spacing>,
+    divider: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    spacing: Option<SeparatorSpacingSize>,
 }
 
 impl CreateSeparator {
-    /// Creates a new separator, with or without a divider.
-    pub fn new(divider: bool) -> Self {
+    /// Creates a new separator.
+    pub fn new() -> Self {
         CreateSeparator {
             kind: ComponentType::Separator,
-            divider,
+            divider: None,
             spacing: None,
         }
     }
 
-    /// Sets if this separator should have a divider or not. Replaces the current value as set in
-    /// [`Self::new`].
+    /// Sets if this separator should have a divider or not.
     pub fn divider(mut self, divider: bool) -> Self {
-        self.divider = divider;
+        self.divider = Some(divider);
         self
     }
 
     /// Sets the spacing of this separator.
-    pub fn spacing(mut self, spacing: Spacing) -> Self {
+    pub fn spacing(mut self, spacing: SeparatorSpacingSize) -> Self {
         self.spacing = Some(spacing);
         self
+    }
+}
+
+impl Default for CreateSeparator {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -451,7 +457,7 @@ impl<'a> CreateContainer<'a> {
         }
     }
 
-    // Set the colour of the left-hand side of the container.
+    /// Set the colour of the left-hand side of the container.
     pub fn accent_colour<C: Into<Colour>>(mut self, colour: C) -> Self {
         self.accent_color = Some(colour.into());
         self
@@ -504,7 +510,8 @@ pub enum CreateContainerComponent<'a> {
     Separator(CreateSeparator),
 }
 
-/// A builder for creating a label that can hold an [`InputText`] or [`SelectMenu`].
+/// A builder for creating a label, a top-level layout component that wraps modal
+/// components with a text label and optional description.
 ///
 /// [Discord docs](https://docs.discord.com/developers/components/reference#label).
 #[derive(Clone, Debug, Serialize)]
@@ -581,7 +588,8 @@ impl<'a> CreateLabel<'a> {
         }
     }
 
-    /// Sets the description of this component, which will display underneath the label text.
+    /// Sets the description of this component, which will display below the label text.
+    /// May display above or below the component depending on the platform.
     pub fn description(mut self, description: impl Into<Cow<'a, str>>) -> Self {
         self.description = Some(description.into());
         self
@@ -887,17 +895,6 @@ impl<'a> CreateCheckbox<'a> {
     }
 }
 
-enum_number! {
-    #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Deserialize, Serialize)]
-    #[cfg_attr(feature = "typesize", derive(typesize::derive::TypeSize))]
-    #[non_exhaustive]
-    pub enum Spacing {
-        Small = 1,
-        Large = 2,
-        _ => Unknown(u8),
-    }
-}
-
 /// A builder for creating a button component in a message
 #[derive(Clone, Debug, Serialize)]
 #[must_use]
@@ -971,9 +968,9 @@ impl<'a> CreateButton<'a> {
     /// Sets the custom id of the button, a developer-defined identifier. Replaces the current
     /// value as set in [`Self::new`].
     ///
-    /// Has no effect on link buttons and premium buttons.
+    /// Has no effect on link buttons or premium buttons.
     pub fn custom_id(mut self, id: impl Into<Cow<'a, str>>) -> Self {
-        if self.url.is_none() {
+        if self.url.is_none() && self.sku_id.is_none() {
             self.custom_id = Some(id.into());
         }
 
@@ -982,9 +979,9 @@ impl<'a> CreateButton<'a> {
 
     /// Sets the style of this button.
     ///
-    /// Has no effect on link buttons and premium buttons.
+    /// Has no effect on link buttons or premium buttons.
     pub fn style(mut self, new_style: ButtonStyle) -> Self {
-        if self.url.is_none() {
+        if self.url.is_none() && self.sku_id.is_none() {
             self.style = new_style;
         }
 
@@ -992,14 +989,24 @@ impl<'a> CreateButton<'a> {
     }
 
     /// Sets label of the button.
+    ///
+    /// Has no effect on premium buttons.
     pub fn label(mut self, label: impl Into<Cow<'a, str>>) -> Self {
-        self.label = Some(label.into());
+        if self.sku_id.is_none() {
+            self.label = Some(label.into());
+        }
+
         self
     }
 
     /// Sets emoji of the button.
+    ///
+    /// Has no effect on premium buttons.
     pub fn emoji(mut self, emoji: impl Into<ReactionType>) -> Self {
-        self.emoji = Some(emoji.into());
+        if self.sku_id.is_none() {
+            self.emoji = Some(emoji.into());
+        }
+
         self
     }
 

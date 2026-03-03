@@ -232,12 +232,8 @@ pub struct TextDisplay {
     /// Always [`ComponentType::TextDisplay`]
     #[serde(rename = "type")]
     pub kind: ComponentType,
-
-    /// Discord’s official documentation does not mention this field; however, it is currently
-    /// returned by the API and represents meaningful data, so it is included here. This
-    /// behavior is undocumented and may change or be removed by Discord at any time.
-    #[cfg(feature = "unstable")]
-    pub content: Option<String>,
+    /// The text content of this component.
+    pub content: String,
 }
 
 /// A Media Gallery is a component that allows you to display media attachments in an organized
@@ -283,7 +279,8 @@ pub struct Separator {
     #[serde(rename = "type")]
     pub kind: ComponentType,
     /// Whether or not this contains a separating divider.
-    pub divider: Option<bool>,
+    #[serde(default = "default_true")]
+    pub divider: bool,
     /// The spacing of the separator.
     pub spacing: Option<SeparatorSpacingSize>,
 }
@@ -682,7 +679,7 @@ enum_number! {
         Secondary = 2,
         Success = 3,
         Danger = 4,
-        // No Link, because we represent Link using enum variants
+        // No Link or Premium, because we represent Link and Premium using enum variants.
         _ => Unknown(u8),
     }
 }
