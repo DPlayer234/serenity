@@ -69,11 +69,11 @@ pub struct EventDispatcher {
 }
 
 impl EventDispatcher {
-    pub async fn dispatch(&self, event: Event) {
+    pub async fn dispatch(&self, mut event: Box<Event>) {
         #[cfg(feature = "voice")]
         {
             if let Some(voice_manager) = &self.voice_manager {
-                match &event {
+                match &*event {
                     Event::Ready(_) => {
                         voice_manager
                             .register_shard(self.context.shard_id.0, self.context.shard.clone())
@@ -94,51 +94,52 @@ impl EventDispatcher {
             }
         }
 
-        if self
-            .event_handler
-            .as_ref()
-            .is_none_or(|handler| handler.filter_event(&self.context, &event))
-            && self
-                .raw_event_handler
-                .as_ref()
-                .is_none_or(|handler| handler.filter_event(&self.context, &event))
-        {
-            #[cfg(feature = "collector")]
-            self.context.collectors.write().retain(|callback| (callback.0)(&event));
-
-            if let Some(raw_handler) = &self.raw_event_handler {
-                raw_handler.raw_event(self.context.clone(), &event).await;
+        if let Some(handler) = self.event_handler.as_ref() {
+            if let Some(new_event) = handler.filter_event(&self.context, event) {
+                event = new_event;
+            } else {
+                return;
             }
+        }
 
-            let mut extra_event = None;
-            let full_event = update_cache_with_event(
-                maybe_cache_from_context(&self.context),
-                event,
-                &mut extra_event,
+        if let Some(handler) = self.raw_event_handler.as_ref() {
+            if let Some(new_event) = handler.filter_event(&self.context, event) {
+                event = new_event;
+            } else {
+                return;
+            }
+        }
+
+        #[cfg(feature = "collector")]
+        self.context.collectors.write().retain(|callback| (callback.0)(&event));
+
+        if let Some(raw_handler) = &self.raw_event_handler {
+            raw_handler.raw_event(self.context.clone(), &event).await;
+        }
+
+        let mut extra_event = None;
+        let full_event = update_cache_with_event(
+            maybe_cache_from_context(&self.context),
+            event,
+            &mut extra_event,
+        );
+
+        #[cfg(feature = "framework")]
+        let framework = self.framework.clone();
+        let event_handler = self.event_handler.clone();
+        let context = self.context.clone();
+
+        spawn_named("dispatch::user", async move {
+            #[cfg(feature = "framework")]
+            tokio::join!(
+                dispatch_framework(&context, framework, &full_event, extra_event.as_ref()),
+                dispatch_event_handler(&context, event_handler, &full_event, extra_event.as_ref())
             );
 
-            #[cfg(feature = "framework")]
-            let framework = self.framework.clone();
-            let event_handler = self.event_handler.clone();
-            let context = self.context.clone();
-
-            spawn_named("dispatch::user", async move {
-                #[cfg(feature = "framework")]
-                tokio::join!(
-                    dispatch_framework(&context, framework, &full_event, extra_event.as_ref()),
-                    dispatch_event_handler(
-                        &context,
-                        event_handler,
-                        &full_event,
-                        extra_event.as_ref()
-                    )
-                );
-
-                #[cfg(not(feature = "framework"))]
-                dispatch_event_handler(&context, event_handler, &full_event, extra_event.as_ref())
-                    .await;
-            });
-        }
+            #[cfg(not(feature = "framework"))]
+            dispatch_event_handler(&context, event_handler, &full_event, extra_event.as_ref())
+                .await;
+        });
     }
 }
 
@@ -181,10 +182,10 @@ fn is_guild_new(cache: &Cache, guild_id: GuildId) -> bool {
 /// Updates the cache with the incoming event data and builds the full event data out of it.
 fn update_cache_with_event(
     cache: &MaybeCache,
-    event: Event,
+    event: Box<Event>,
     extra_event: &mut Option<FullEvent>,
 ) -> FullEvent {
-    match event {
+    match *event {
         Event::CommandPermissionsUpdate(event) => FullEvent::CommandPermissionsUpdate {
             permission: event.permission,
         },
@@ -641,7 +642,7 @@ mod tests {
         let cache = Cache::new();
 
         let guild_id = GuildId::new(1);
-        let event = Event::Ready(ReadyEvent {
+        let event = Box::new(Event::Ready(ReadyEvent {
             ready: Ready {
                 version: 0,
                 user: CurrentUser::default(),
@@ -657,7 +658,7 @@ mod tests {
                     flags: ApplicationFlags::default(),
                 },
             },
-        });
+        }));
 
         assert_eq!(cache.unavailable_guilds().len(), 0);
 
@@ -669,7 +670,7 @@ mod tests {
         assert_eq!(cache.unavailable_guilds().len(), 1);
         assert!(!is_guild_new(&cache, guild_id));
 
-        let event = Event::GuildCreate(GuildCreateEvent {
+        let event = Box::new(Event::GuildCreate(GuildCreateEvent {
             guild: Guild {
                 __generated_flags: GuildGeneratedFlags::default(),
                 id: guild_id,
@@ -720,7 +721,7 @@ mod tests {
                 threads: ExtractMap::new(),
                 voice_states: ExtractMap::new(),
             },
-        });
+        }));
 
         assert_eq!(cache.unavailable_guilds().len(), 1);
 
@@ -739,7 +740,7 @@ mod tests {
 
         let guild_id2 = GuildId::new(2);
 
-        let event = Event::GuildCreate(GuildCreateEvent {
+        let event = Box::new(Event::GuildCreate(GuildCreateEvent {
             guild: Guild {
                 __generated_flags: GuildGeneratedFlags::default(),
                 id: guild_id2,
@@ -790,7 +791,7 @@ mod tests {
                 threads: ExtractMap::new(),
                 voice_states: ExtractMap::new(),
             },
-        });
+        }));
 
         assert_eq!(cache.unavailable_guilds().len(), 0);
 
