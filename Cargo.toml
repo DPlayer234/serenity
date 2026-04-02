@@ -74,6 +74,7 @@ package = "http"
 [features]
 # Defaults with different backends
 default = ["default_no_backend", "rustls_backend"]
+default_rustls_no_provider = ["default_no_backend", "rustls_backend_no_provider"]
 default_native_tls = ["default_no_backend", "native_tls_backend"]
 
 # Serenity requires a backend, this picks all default features without a backend.
@@ -139,6 +140,10 @@ tracing_instrument = ["tracing/attributes"]
 # - Rustls Backends
 rustls_backend = [
     "reqwest/rustls",
+    "tokio-tungstenite/rustls-tls-webpki-roots",
+]
+rustls_backend_no_provider = [
+    "reqwest/rustls-no-provider",
     "tokio-tungstenite/rustls-tls-webpki-roots",
 ]
 

@@ -142,6 +142,7 @@ There are these alternative default features, they require to set `default-featu
 
 - **default_native_tls**: Uses `native_tls_backend` instead of the default `rustls_backend`.
 - **default_no_backend**: Excludes the default backend, pick your own backend instead.
+- **default_rustls_no_provider**: Uses `rustls_backend_no_provider`, requiring manual registration of a Rustls crypto provider.
 
 If you are unsure which to pick, use the default features by not setting `default-features = false`.
 
@@ -167,6 +168,8 @@ the HTTP functions.
 [lavalink-rs][project:lavalink-rs] or [Songbird][project:songbird] are recommended voice plugins.
 - **default_native_tls**: Default features but using `native_tls_backend`
 instead of `rustls_backend`.
+- **default_rustls_no_provider**: Default features but using `rustls_backend_no_provider` instead of `rustls_backend`, requiring manual registration of a Rustls crypto provider.
+- **default_no_backend**: Default features, but does not enable any backend.
 - **tokio_task_builder**: Enables tokio's `tracing` feature and uses `tokio::task::Builder` to spawn tasks with names if `RUSTFLAGS="--cfg tokio_unstable"` is set.
 - **unstable**: Enables features of the Serenity and Discord API that do not have a stable interface. The features might not have official documentation and are subject to change without a breaking version bump.
 - **temp_cache**: Enables temporary caching in functions that retrieve data via the HTTP API.
@@ -182,6 +185,8 @@ one if you do not use the default features:
 
 - **rustls_backend**: Uses Rustls for all platforms, a pure Rust
 TLS implementation.
+- **rustls_backend_no_provider**: Same as `rustls_backend`, but excludes a default
+crypto provider, therefore requiring manual registration of a Rustls crypto provider.
 - **native_tls_backend**: Uses SChannel on Windows, Secure Transport on macOS,
 and OpenSSL on other platforms.
 
