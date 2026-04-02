@@ -168,8 +168,8 @@ the HTTP functions.
 [lavalink-rs][project:lavalink-rs] or [Songbird][project:songbird] are recommended voice plugins.
 - **default_native_tls**: Default features but using `native_tls_backend`
 instead of `rustls_backend`.
-- **default_no_backend**: Defaults features, but does not enable any backend.
-- **default_rustls_no_provider**: Defaults features but using `rustls_backend_no_provider` instead of `rustls_backend`, requiring manual registration of a Rustls crypto provider.
+- **default_rustls_no_provider**: Default features but using `rustls_backend_no_provider` instead of `rustls_backend`, requiring manual registration of a Rustls crypto provider.
+- **default_no_backend**: Default features, but does not enable any backend.
 - **tokio_task_builder**: Enables tokio's `tracing` feature and uses `tokio::task::Builder` to spawn tasks with names if `RUSTFLAGS="--cfg tokio_unstable"` is set.
 - **unstable**: Enables features of the Serenity and Discord API that do not have a stable interface. The features might not have official documentation and are subject to change without a breaking version bump.
 - **temp_cache**: Enables temporary caching in functions that retrieve data via the HTTP API.
