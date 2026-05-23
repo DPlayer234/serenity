@@ -182,6 +182,52 @@ macro_rules! bitflags {
     };
 }
 
+/// The `http_response_codes!` macro generates `const` definitions and methods for incorporating
+/// Discord-defined [`HttpResponseCode`]s and meanings into error messages.
+///
+/// [`HttpResponseCode`]: crate::http::HttpResponseCode
+macro_rules! http_response_codes {
+    (
+        $(
+            $(#[$docs:meta])*
+            ($code:expr, $konst:ident, $message:expr);
+        )+
+    ) => {
+        impl HttpResponseCode {
+        $(
+            $(#[$docs])*
+            pub const $konst: Self = Self($code);
+        )+
+
+        /// Returns the Discord-defined meaning of this HTTP response code, if available.
+        #[must_use]
+        pub const fn to_meaning(&self) -> Option<&'static str> {
+            Self::meaning_of(self.0)
+        }
+
+        /// Returns an HTTP response code returned by the API with its Discord-defined meaning,
+        /// if available.
+        #[must_use]
+        pub const fn meaning_of(code: u16) -> Option<&'static str> {
+            match code {
+                $(
+                $code => Some($message),
+                )+
+                503 | 504 => HttpResponseCode::meaning_of(500),
+                _ => None
+            }
+        }
+
+        }
+
+        impl From<StatusCode> for HttpResponseCode {
+            fn from(status_code: StatusCode) -> Self {
+                Self(status_code.as_u16())
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use serde_json::json;

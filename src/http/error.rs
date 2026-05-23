@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::error::Error as StdError;
 use std::fmt;
@@ -33,6 +34,7 @@ enum_number! {
         UnknownWebhook = 10015,
         UnknownWebhookService = 10016,
         UnknownSession = 10020,
+        UnknownAsset = 10021,
         UnknownBan = 10026,
         UnknownSKU = 10027,
         UnknownStoreListing = 10028,
@@ -59,6 +61,9 @@ enum_number! {
         UnknownGuildScheduledEvent = 10070,
         UnknownGuildScheduledEventUser = 10071,
         UnknownTag = 10087,
+        UnknownSound = 10097,
+        UnknownInviteTargetUsersJob = 10124,
+        UnknownInviteTargetUsers = 10129,
 
         // Hit restriction (20xxx)
         BotsCannotUseThisEndpoint = 20001,
@@ -100,6 +105,7 @@ enum_number! {
         MaxStickersReached = 30039,
         MaxPruneRequestsReached = 30040,
         MaxGuildWidgetSettingsUpdatesReached = 30042,
+        MaxSoundboardSoundsReached = 30045,
         MaxEditsToOldMessagesReached = 30046,
         MaxPinnedThreadsInForumChannelReached = 30047,
         MaxTagsInForumChannelReached = 30048,
@@ -117,6 +123,8 @@ enum_number! {
         FeatureTemporarilyDisabled = 40006,
         UserBannedFromGuild = 40007,
         ConnectionRevoked = 40012,
+        OnlyConsumableSkusCanBeConsumed = 40018,
+        CanOnlyDeleteSandboxEntitlements = 40019,
         TargetUserNotConnectedToVoice = 40032,
         MessageAlreadyCrossposted = 40033,
         ApplicationCommandNameExists = 40041,
@@ -128,6 +136,7 @@ enum_number! {
         NoTagsForNonModerators = 40066,
         TagRequiredForForumPost = 40067,
         EntitlementAlreadyGranted = 40074,
+        MaxFollowupMessagesReached = 40094,
         CloudflareBlockingRequest = 40333,
 
         MissingAccess = 50001,
@@ -182,11 +191,16 @@ enum_number! {
         ServerMonetizationRequired = 50097,
         MoreBoostsRequired = 50101,
         InvalidJsonInRequestBody = 50109,
+        InvalidFileProvided = 50110,
+        InvalidFileTypeProvided = 50123,
+        MaxFileDurationExceeded = 50124,
         OwnerCannotBePendingMember = 50131,
         OwnershipTransferNotAllowedToBot = 50132,
         FailedToResizeAsset = 50138,
         CannotMixPremiumAndNormalEmoji = 50144,
+        CannotConvertBetweenPremiumAndNormalEmoji = 50145,
         UploadedFileNotFound = 50146,
+        InvalidEmoji = 50151,
         VoiceMessagesNoAdditionalContent = 50159,
         SingleAudioAttachmentRequired = 50160,
         MetadataRequiredForVoiceMessages = 50161,
@@ -194,6 +208,7 @@ enum_number! {
         CannotDeleteGuildSubscriptionIntegration = 50163,
         CannotSendVoiceMessagesInChannel = 50173,
         UserAccountMustBeVerified = 50178,
+        InvalidFileDuration = 50192,
         CannotSendMessagesToUserDueToHavingNoMutualGuilds = 50278,
         NoPermissionForSticker = 50600,
 
@@ -202,6 +217,7 @@ enum_number! {
         ReactionBlocked = 90001,
         UserCannotUseBurstReactions = 90002,
 
+        IndexNotAvailable = 110000,
         ApplicationNotAvailable = 110001,
         ApiResourceOverloaded = 130000,
         StageAlreadyOpen = 150006,
@@ -211,11 +227,13 @@ enum_number! {
         ThreadLocked = 160005,
         MaxActiveThreadsReached = 160006,
         MaxActiveAnnouncementThreadsReached = 160007,
+        CannotForwardUnreadableMessage = 160014,
 
         InvalidJsonForLottieFile = 170001,
         LottiesCannotContainRasterizedImages = 170002,
         StickerMaxFramerateExceeded = 170003,
         StickerFrameCountExceedsMax = 170004,
+        LottieAnimationMaxDimensionsExceeded = 170005,
         StickerFrameRateInvalid = 170006,
         StickerAnimationDurationExceedsMaximum = 170007,
 
@@ -292,8 +310,24 @@ impl ErrorResponse {
             url: FixedString::from_str_trunc(r.url().as_str()),
             error: r.json().await.unwrap_or_else(|e| DiscordJsonError {
                 code: JsonErrorCode::Unknown(1),
-                errors: FixedArray::empty(),
-                message: format!("[Serenity] Could not decode json when receiving error response from discord:, {e}").trunc_into(),
+                errors: vec![
+                    DiscordJsonSingleError {
+                        code: FixedString::new(),
+                        message: e.to_string().trunc_into(),
+                        path: Arc::default(),
+                    },
+                    DiscordJsonSingleError {
+                        code: FixedString::new(),
+                        message: e
+                            .source()
+                            .map_or(FixedString::new(), |source| source.to_string().trunc_into()),
+                        path: Arc::default(),
+                    },
+                ]
+                .trunc_into(),
+                message: FixedString::from_static_trunc(
+                    "could not decode JSON when receiving error response from Discord",
+                ),
             }),
         }
     }
@@ -366,6 +400,46 @@ impl fmt::Display for HttpError {
             Self::UnsuccessfulRequest(e) => {
                 f.write_str(&e.error.message)?;
 
+                // Return the HTTP response code with a JSON decode error
+                if e.error.code == JsonErrorCode::Unknown(1) {
+                    f.write_str(" (")?;
+                    // Return the verbose code and meaning in the alternate (`#`) format
+                    if f.alternate() {
+                        f.write_str(
+                            &HttpResponseCode::from(e.status_code).to_meaning().map_or_else(
+                                || {
+                                    let mut status_code = e.status_code.to_string();
+                                    status_code.make_ascii_lowercase();
+                                    Cow::Owned(status_code)
+                                },
+                                Cow::Borrowed,
+                            ),
+                        )?;
+                    } else {
+                        f.write_str("HTTP ")?;
+                        f.write_str(e.status_code.as_str())?;
+                    }
+                    f.write_str(")")?;
+
+                    // Append the JSON decode errors
+                    let mut errors_iter = e.error.errors.iter();
+                    if let Some(error) = errors_iter.next()
+                        && !error.message.is_empty()
+                    {
+                        f.write_str(": ")?;
+                        f.write_str(&error.message)?;
+                        // Include the JSON decode error source error in the alternate (`#`) format
+                        if f.alternate()
+                            && let Some(error) = errors_iter.next()
+                            && !error.message.is_empty()
+                        {
+                            f.write_str(": ")?;
+                            f.write_str(&error.message)?;
+                        }
+                    }
+                    return Ok(());
+                }
+
                 // Put Discord's human readable error explanations in parentheses
                 let mut errors_iter = e.error.errors.iter();
                 if let Some(error) = errors_iter.next() {
@@ -401,6 +475,39 @@ impl StdError for HttpError {
             _ => None,
         }
     }
+}
+
+/// HTTP response codes returned by the Discord API.
+///
+/// [Discord docs](https://docs.discord.com/developers/topics/opcodes-and-status-codes#http).
+#[derive(Debug)]
+pub struct HttpResponseCode(pub u16);
+
+http_response_codes! {
+    /// 200 (OK) The request completed successfully.
+    (200, OK, "200 OK: the request completed successfully");
+    /// 201 (CREATED) The entity was created successfully.
+    (201, CREATED, "201 created: the entity was created successfully");
+    /// 204 (NO CONTENT) The request completed successfully but returned no content.
+    (204, NO_CONTENT, "204 no content: the request completed successfully but returned no content");
+    /// 304 (NOT MODIFIED) The entity was not modified (no action was taken).
+    (304, NOT_MODIFIED, "304 not modified: the entity was not modified (no action was taken)");
+    /// 400 (BAD REQUEST) The request was improperly formatted, or the server couldn’t understand it.
+    (400, BAD_REQUEST, "400 bad request: the request was improperly formatted, or the server couldn't understand it");
+    /// 401 (UNAUTHORIZED) The `Authorization` header was missing or invalid.
+    (401, UNAUTHORIZED, "401 unauthorized: the authorization header was missing or invalid");
+    /// 403 (FORBIDDEN) The `Authorization` token you passed did not have permission to the resource.
+    (403, FORBIDDEN, "403 forbidden: the authorization token you passed did not have permission to the resource");
+    /// 404 (NOT FOUND) The resource at the location specified doesn’t exist.
+    (404, NOT_FOUND, "404 not found: the resource at the location specified doesn't exist");
+    /// 405 (METHOD NOT ALLOWED) The HTTP method used is not valid for the location specified.
+    (405, METHOD_NOT_ALLOWED, "405 method not allowed: the http method used is not valid for the location specified");
+    /// 429 (TOO MANY REQUESTS) You are being rate limited, see [Rate Limits](https://docs.discord.com/developers/topics/rate-limits).
+    (429, TOO_MANY_REQUESTS, "429 too many requests: you are being rate limited");
+    /// 5xx (SERVER ERROR) The server had an error processing your request (these are rare).
+    (500, SERVER_ERROR, "5xx server error: the server had an error processing your request");
+    /// 502 (GATEWAY UNAVAILABLE) There was not a gateway available to process your request. Wait a bit and retry.
+    (502, GATEWAY_UNAVAILABLE, "502 gateway unavailable: there was not a gateway available to process your request");
 }
 
 #[expect(clippy::missing_errors_doc)]
@@ -493,5 +600,40 @@ mod test {
         };
 
         assert_eq!(error_response, known);
+    }
+
+    #[tokio::test]
+    async fn test_http_response_codes() {
+        let response = Builder::new().status(502).body("").unwrap();
+        let reqwest_response: reqwest::Response = response.into();
+        let error_response = ErrorResponse::from_response(reqwest_response, Method::POST).await;
+        let http_error = HttpError::from(error_response);
+
+        let expected = "could not decode JSON when receiving error response from Discord (502 \
+            gateway unavailable: there was not a gateway available to process your request): error \
+            decoding response body: EOF while parsing a value at line 1 column 0";
+
+        assert_eq!(format!("{http_error:#}"), expected);
+
+        let expected = "could not decode JSON when receiving error response from Discord (HTTP \
+            502): error decoding response body";
+
+        assert_eq!(http_error.to_string(), expected);
+
+        let response = Builder::new().status(408).body("").unwrap();
+        let reqwest_response: reqwest::Response = response.into();
+        let error_response = ErrorResponse::from_response(reqwest_response, Method::POST).await;
+        let http_error = HttpError::from(error_response);
+
+        let expected = "could not decode JSON when receiving error response from Discord (408 \
+            request timeout): error decoding response body: EOF while parsing a value at line 1 \
+            column 0";
+
+        assert_eq!(format!("{http_error:#}"), expected);
+
+        let expected = "could not decode JSON when receiving error response from Discord (HTTP \
+            408): error decoding response body";
+
+        assert_eq!(http_error.to_string(), expected);
     }
 }
