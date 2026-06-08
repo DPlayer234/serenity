@@ -268,6 +268,17 @@ impl Context {
         });
     }
 
+    /// Requests ephemeral channel data for channels in a guild.
+    ///
+    /// This will ask the gateway to send ephemeral channel data for channels in a guild. The
+    /// server will send an [`Event::ChannelInfo`] event in response.
+    pub fn channel_info(&self, guild_id: GuildId, fields: ChannelInfoField) {
+        self.send_to_shard(ShardRunnerMessage::ChannelInfo {
+            guild_id,
+            fields: fields.into(),
+        });
+    }
+
     /// Indicates to the gateway that the client wants to join, move, or disconnect from a voice
     /// channel.
     #[cfg(feature = "voice")]

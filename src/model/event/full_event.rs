@@ -81,6 +81,10 @@ full_event! {
     ///
     /// Provides said channel's data.
     ChannelDelete { channel: GuildChannel, messages: Option<VecDeque<Message>> };
+    /// Dispatched when channel info is requested for a guild.
+    ///
+    /// Provides said channel info.
+    ChannelInfo { old: Option<Vec<ChannelInfoChannel>>, guild_id: GuildId, channels: Vec<ChannelInfoChannel> };
     /// Dispatched when a pin is added, deleted.
     ///
     /// Provides said pin's data.
@@ -288,6 +292,10 @@ full_event! {
     /// [`GatewayIntents::GUILDS`] is enabled) and the new state of the guild's voice channels.
     VoiceStateUpdate { old: Option<VoiceState>, new: VoiceState };
 
+    /// Dispatched when a voice channel's start time is updated.
+    ///
+    /// Provides the start time, channel's id and the guild's id.
+    VoiceChannelStartTimeUpdate { old: Option<i64>, id: ChannelId,  guild_id: GuildId, voice_start_time: Option<i64> };
     /// Dispatched when a voice channel's status is updated.
     ///
     /// Provides the status, channel's id and the guild's id.
@@ -456,6 +464,18 @@ impl FullEvent {
                         channel,
                         messages: cached_messages,
                     }
+                }
+            },
+            Event::ChannelInfo(event) => {
+                #[cfg(feature = "cache")]
+                let old = event.update(cache);
+                #[cfg(not(feature = "cache"))]
+                let old = None;
+
+                Self::ChannelInfo {
+                    old,
+                    guild_id: event.guild_id,
+                    channels: event.channels,
                 }
             },
             Event::ChannelPinsUpdate(event) => Self::ChannelPinsUpdate {
@@ -771,15 +791,32 @@ impl FullEvent {
                     new: event.voice_state,
                 }
             },
+            Event::VoiceChannelStartTimeUpdate(event) => {
+                #[cfg(feature = "cache")]
+                let old = event.update(cache);
+                #[cfg(not(feature = "cache"))]
+                let old = None;
+
+                Self::VoiceChannelStartTimeUpdate {
+                    old,
+                    id: event.id,
+                    guild_id: event.guild_id,
+                    voice_start_time: event.voice_start_time,
+                }
+            },
             Event::VoiceChannelStatusUpdate(event) => {
                 #[cfg(feature = "cache")]
                 let old = event.update(cache).map(Into::into);
                 #[cfg(not(feature = "cache"))]
                 let old = None;
 
+                let status: Option<String> = event.status.map(Into::into);
+                let status =
+                    if status.as_ref().is_some_and(String::is_empty) { None } else { status };
+
                 Self::VoiceChannelStatusUpdate {
                     old,
-                    status: event.status.map(Into::into),
+                    status,
                     id: event.id,
                     guild_id: event.guild_id,
                 }
