@@ -5,6 +5,7 @@ use super::{
     CreateAttachment,
     CreateComponent,
     CreateEmbed,
+    EditAttachment,
     EditAttachments,
 };
 #[cfg(feature = "http")]
@@ -139,6 +140,13 @@ impl<'a> EditWebhookMessage<'a> {
     pub fn keep_existing_attachment(mut self, id: AttachmentId) -> Self {
         let attachments = self.attachments.get_or_insert_with(Default::default);
         self.attachments = Some(std::mem::take(attachments).keep(id));
+        self
+    }
+
+    /// Shorthand for [`EditAttachments::keep_and_update`].
+    pub fn keep_and_update_existing_attachment(mut self, attachment: EditAttachment<'a>) -> Self {
+        let attachments = self.attachments.get_or_insert_with(Default::default);
+        self.attachments = Some(std::mem::take(attachments).keep_and_update(attachment));
         self
     }
 
