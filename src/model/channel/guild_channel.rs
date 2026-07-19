@@ -104,13 +104,7 @@ pub struct GuildChannel {
     /// Default duration for newly created threads, in minutes, to automatically archive the thread
     /// after recent activity.
     pub default_auto_archive_duration: Option<AutoArchiveDuration>,
-    /// Computed permissions for the invoking user in the channel, including overwrites.
-    ///
-    /// Only included inside [`CommandDataResolved`].
-    pub permissions: Option<Permissions>,
-    /// Extra information about the channel
-    ///
-    /// **Note**: This is only available in forum channels.
+    /// Extra information about the channel.
     #[serde(default)]
     pub flags: ChannelFlags,
     /// The set of available tags.
