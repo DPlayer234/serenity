@@ -8,8 +8,6 @@
 #![allow(clippy::option_option)]
 
 #[cfg(feature = "http")]
-use crate::internal::prelude::*;
-#[cfg(feature = "http")]
 use crate::model::ModelError;
 
 #[cfg(feature = "http")]
@@ -17,7 +15,7 @@ pub(crate) fn check_lengths(
     content: Option<&str>,
     embeds: Option<&[CreateEmbed<'_>]>,
     stickers: usize,
-) -> StdResult<(), ModelError> {
+) -> Result<(), ModelError> {
     use crate::model::error::Maximum;
 
     if let Some(content) = content {
@@ -78,8 +76,8 @@ mod edit_thread;
 mod edit_voice_state;
 mod edit_webhook;
 mod edit_webhook_message;
+mod entitlements;
 mod execute_webhook;
-mod get_entitlements;
 mod get_messages;
 
 pub use add_member::*;
@@ -125,8 +123,8 @@ pub use edit_thread::*;
 pub use edit_voice_state::*;
 pub use edit_webhook::*;
 pub use edit_webhook_message::*;
+pub use entitlements::*;
 pub use execute_webhook::*;
-pub use get_entitlements::*;
 pub use get_messages::*;
 
 macro_rules! button_and_select_menu_convenience_methods {

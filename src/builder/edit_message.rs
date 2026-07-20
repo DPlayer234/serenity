@@ -8,8 +8,6 @@ use super::{
     EditAttachment,
     EditAttachments,
 };
-#[cfg(feature = "http")]
-use crate::http::CacheHttp;
 use crate::model::prelude::*;
 
 /// A builder to specify the fields to edit in an existing message.
@@ -243,7 +241,8 @@ impl<'a> EditMessage<'a> {
             return Err(Error::Model(ModelError::InvalidUser));
         }
 
-        let files = self.attachments.as_ref().map_or(Vec::new(), EditAttachments::new_attachments);
+        let files =
+            self.attachments.as_ref().map_or(Vec::new(), EditAttachments::new_attachment_data);
 
         let http = cache_http.http();
         if self.allowed_mentions.is_none() {
