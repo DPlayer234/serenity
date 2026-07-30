@@ -201,6 +201,11 @@ impl<'a> DataUri<'a> {
             Err(Error::Url(UrlError::InvalidDataURI))
         }
     }
+
+    #[must_use]
+    pub fn into_owned(self) -> DataUri<'static> {
+        DataUri(self.0.into_owned().into())
+    }
 }
 
 /// A builder for updating metadata for an existing attachment.

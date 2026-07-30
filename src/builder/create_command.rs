@@ -316,6 +316,57 @@ impl<'a> CreateCommandOption<'a> {
 
         self
     }
+
+    pub fn into_owned(self) -> CreateCommandOption<'static> {
+        let Self {
+            kind,
+            name,
+            name_localizations,
+            description,
+            description_localizations,
+            required,
+            choices,
+            options,
+            channel_types,
+            min_value,
+            max_value,
+            min_length,
+            max_length,
+            autocomplete,
+        } = self;
+        CreateCommandOption {
+            kind,
+            name: name.into_owned().into(),
+            name_localizations: name_localizations.map(|map| {
+                map.into_iter()
+                    .map(|(k, v)| (k.into_owned().into(), v.into_owned().into()))
+                    .collect()
+            }),
+            description: description.into_owned().into(),
+            description_localizations: description_localizations.map(|map| {
+                map.into_iter()
+                    .map(|(k, v)| (k.into_owned().into(), v.into_owned().into()))
+                    .collect()
+            }),
+            required,
+            choices: Cow::Owned(
+                choices
+                    .into_owned()
+                    .into_iter()
+                    .map(CreateCommandOptionChoice::into_owned)
+                    .collect(),
+            ),
+            options: Cow::Owned(
+                options.into_owned().into_iter().map(CreateCommandOption::into_owned).collect(),
+            ),
+            channel_types: channel_types.into_owned().into(),
+            min_value,
+            max_value,
+            min_length,
+            max_length,
+            autocomplete,
+        }
+    }
 }
 
 /// A builder for creating a new [`Command`].
@@ -344,7 +395,6 @@ impl<'a> CreateCommand<'a> {
         Self {
             kind: None,
             handler: None,
-
             fields: EditCommand::new().name(name),
         }
     }
@@ -495,6 +545,19 @@ impl<'a> CreateCommand<'a> {
             None => http.create_global_command(&self).await,
         }
     }
+
+    pub fn into_owned(self) -> CreateCommand<'static> {
+        let Self {
+            kind,
+            handler,
+            fields,
+        } = self;
+        CreateCommand {
+            kind,
+            handler,
+            fields: fields.into_owned(),
+        }
+    }
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -503,4 +566,23 @@ struct CreateCommandOptionChoice<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name_localizations: Option<HashMap<Cow<'a, str>, Cow<'a, str>>>,
     pub value: Value,
+}
+
+impl CreateCommandOptionChoice<'_> {
+    pub fn into_owned(self) -> CreateCommandOptionChoice<'static> {
+        let Self {
+            name,
+            name_localizations,
+            value,
+        } = self;
+        CreateCommandOptionChoice {
+            name: name.into_owned().into(),
+            name_localizations: name_localizations.map(|map| {
+                map.into_iter()
+                    .map(|(k, v)| (k.into_owned().into(), v.into_owned().into()))
+                    .collect()
+            }),
+            value,
+        }
+    }
 }
