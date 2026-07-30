@@ -449,7 +449,7 @@ impl GuildId {
     ///
     /// Returns [`Error::Http`] if the current user lacks permission or if invalid data is given.
     ///
-    /// [Manage Events]: Permissions::CREATE_EVENTS
+    /// [Create Events]: Permissions::CREATE_EVENTS
     pub async fn create_scheduled_event(
         self,
         http: &Http,
@@ -1153,9 +1153,15 @@ impl GuildId {
 
     /// Gets a user's voice state in this guild.
     ///
+    /// **Note**: If the specified user is connected to a voice channel, the current user must
+    /// have the [Connect] permission for that channel.
+    ///
     /// # Errors
     ///
-    /// Returns [`Error::Http`] if the user is not in a voice channel in this guild.
+    /// Returns [`Error::Http`] if the current user lacks permission, or if the user is not in a
+    /// voice channel in this guild.
+    ///
+    /// [Connect]: Permissions::CONNECT
     pub async fn get_user_voice_state(self, http: &Http, user_id: UserId) -> Result<VoiceState> {
         http.get_user_voice_state(self, user_id).await
     }
@@ -1221,7 +1227,9 @@ impl GuildId {
     /// Although not required, you should specify all channels' positions, regardless of whether
     /// they were updated. Otherwise, positioning can sometimes get weird.
     ///
-    /// **Note**: Requires the [Manage Channels] permission.
+    /// **Note**: Requires the [Manage Channels] permission at the guild level (or on the
+    /// channel’s current parent category). It does not require access to the individual channel,
+    /// so a full reordering may include channels the current user cannot view.
     ///
     /// # Errors
     ///
