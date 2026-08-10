@@ -177,7 +177,8 @@ impl<'a> EditCommand<'a> {
         }
     }
 
-    pub fn into_owned(self) -> EditCommand<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> EditCommand<'new> {
         let Self {
             name,
             name_localizations,
@@ -203,9 +204,11 @@ impl<'a> EditCommand<'a> {
                 .into_iter()
                 .map(|(k, v)| (k.into_owned().into(), v.into_owned().into()))
                 .collect(),
-            options: Cow::Owned(
-                options.into_owned().into_iter().map(CreateCommandOption::into_owned).collect(),
-            ),
+            options: options
+                .into_owned()
+                .into_iter()
+                .map(CreateCommandOption::into_owned)
+                .collect(),
             default_member_permissions,
             #[cfg(not(feature = "unstable"))]
             dm_permission,

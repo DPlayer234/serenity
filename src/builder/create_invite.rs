@@ -128,7 +128,8 @@ impl<'a> CreateInvite<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateInvite<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateInvite<'new> {
         let Self {
             max_age,
             max_uses,

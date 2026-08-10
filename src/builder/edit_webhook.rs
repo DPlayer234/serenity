@@ -58,7 +58,8 @@ impl<'a> EditWebhook<'a> {
         self
     }
 
-    pub fn into_owned(self) -> EditWebhook<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> EditWebhook<'new> {
         let Self {
             name,
             avatar,

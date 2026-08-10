@@ -302,7 +302,8 @@ impl<'a> EditGuild<'a> {
         self
     }
 
-    pub fn into_owned(self) -> EditGuild<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> EditGuild<'new> {
         let Self {
             name,
             verification_level,
@@ -342,9 +343,8 @@ impl<'a> EditGuild<'a> {
             rules_channel_id,
             public_updates_channel_id,
             preferred_locale: preferred_locale.map(|l| l.map(|l| l.into_owned().into())),
-            features: features.map(|f| {
-                Cow::Owned(f.into_owned().into_iter().map(|f| Cow::Owned(f.into_owned())).collect())
-            }),
+            features: features
+                .map(|f| f.into_owned().into_iter().map(|f| Cow::Owned(f.into_owned())).collect()),
             description: description.map(|d| d.into_owned().into()),
             premium_progress_bar_enabled,
             audit_log_reason: audit_log_reason.map(|r| Cow::Owned(r.into_owned())),

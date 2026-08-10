@@ -31,7 +31,8 @@ struct CreatePollMedia<'a> {
 }
 
 impl CreatePollMedia<'_> {
-    pub fn into_owned(self) -> CreatePollMedia<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreatePollMedia<'new> {
         CreatePollMedia {
             text: self.text.into_owned().into(),
         }
@@ -171,9 +172,7 @@ impl<Stage: Sealed> CreatePoll<'_, Stage> {
         } = self;
         CreatePoll {
             question: question.into_owned(),
-            answers: Cow::Owned(
-                answers.into_owned().into_iter().map(CreatePollAnswer::into_owned).collect(),
-            ),
+            answers: answers.into_owned().into_iter().map(CreatePollAnswer::into_owned).collect(),
             duration,
             allow_multiselect,
             layout_type,
@@ -189,7 +188,8 @@ struct CreatePollAnswerMedia<'a> {
 }
 
 impl CreatePollAnswerMedia<'_> {
-    pub fn into_owned(self) -> CreatePollAnswerMedia<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreatePollAnswerMedia<'new> {
         CreatePollAnswerMedia {
             text: self.text.map(|t| t.into_owned().into()),
             emoji: self.emoji,
@@ -221,7 +221,8 @@ impl<'a> CreatePollAnswer<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreatePollAnswer<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreatePollAnswer<'new> {
         CreatePollAnswer {
             poll_media: self.poll_media.into_owned(),
         }

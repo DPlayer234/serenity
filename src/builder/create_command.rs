@@ -335,7 +335,8 @@ impl<'a> CreateCommandOption<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateCommandOption<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateCommandOption<'new> {
         let Self {
             kind,
             name,
@@ -368,24 +369,26 @@ impl<'a> CreateCommandOption<'a> {
                     .collect()
             }),
             required,
-            choices: Cow::Owned(
-                choices
-                    .into_owned()
-                    .into_iter()
-                    .map(CreateCommandOptionChoice::into_owned)
-                    .collect(),
-            ),
-            options: Cow::Owned(
-                options.into_owned().into_iter().map(CreateCommandOption::into_owned).collect(),
-            ),
+            choices: choices
+                .into_owned()
+                .into_iter()
+                .map(CreateCommandOptionChoice::into_owned)
+                .collect(),
+            options: options
+                .into_owned()
+                .into_iter()
+                .map(CreateCommandOption::into_owned)
+                .collect(),
             channel_types: channel_types.into_owned().into(),
             min_value,
             max_value,
             min_length,
             max_length,
-            file_types: Cow::Owned(
-                file_types.into_owned().into_iter().map(|f| f.into_owned().into()).collect(),
-            ),
+            file_types: file_types
+                .into_owned()
+                .into_iter()
+                .map(|f| f.into_owned().into())
+                .collect(),
             autocomplete,
         }
     }
@@ -568,7 +571,8 @@ impl<'a> CreateCommand<'a> {
         }
     }
 
-    pub fn into_owned(self) -> CreateCommand<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateCommand<'new> {
         let Self {
             kind,
             handler,
@@ -591,7 +595,8 @@ struct CreateCommandOptionChoice<'a> {
 }
 
 impl CreateCommandOptionChoice<'_> {
-    pub fn into_owned(self) -> CreateCommandOptionChoice<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateCommandOptionChoice<'new> {
         let Self {
             name,
             name_localizations,

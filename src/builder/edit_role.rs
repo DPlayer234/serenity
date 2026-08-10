@@ -153,7 +153,8 @@ impl<'a> EditRole<'a> {
         self
     }
 
-    pub fn into_owned(self) -> EditRole<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> EditRole<'new> {
         let Self {
             name,
             permissions,

@@ -61,7 +61,8 @@ impl<'a> EditSoundboard<'a> {
         self
     }
 
-    pub fn into_owned(self) -> EditSoundboard<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> EditSoundboard<'new> {
         let Self {
             name,
             volume,

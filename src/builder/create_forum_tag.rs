@@ -45,7 +45,8 @@ impl<'a> CreateForumTag<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateForumTag<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateForumTag<'new> {
         let Self {
             name,
             moderated,

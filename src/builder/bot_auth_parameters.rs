@@ -128,7 +128,8 @@ impl<'a> CreateBotAuthParameters<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateBotAuthParameters<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateBotAuthParameters<'new> {
         let Self {
             client_id,
             scopes,

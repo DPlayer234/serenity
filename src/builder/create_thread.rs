@@ -91,7 +91,8 @@ impl<'a> CreateThread<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateThread<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateThread<'new> {
         let Self {
             name,
             auto_archive_duration,

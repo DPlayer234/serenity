@@ -117,7 +117,8 @@ impl<'a> GetEntitlements<'a> {
         self
     }
 
-    pub fn into_owned(self) -> GetEntitlements<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> GetEntitlements<'new> {
         let Self {
             user_id,
             sku_ids,

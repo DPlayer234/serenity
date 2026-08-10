@@ -161,7 +161,8 @@ impl<'a> EditScheduledEvent<'a> {
         self
     }
 
-    pub fn into_owned(self) -> EditScheduledEvent<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> EditScheduledEvent<'new> {
         let Self {
             channel_id,
             entity_metadata,

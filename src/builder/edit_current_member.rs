@@ -70,7 +70,8 @@ impl<'a> EditCurrentMember<'a> {
         self
     }
 
-    pub fn into_owned(self) -> EditCurrentMember<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> EditCurrentMember<'new> {
         let Self {
             nick,
             banner,

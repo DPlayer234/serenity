@@ -22,11 +22,12 @@ impl<'a> CreateActionRow<'a> {
     pub fn select_menu(select_menu: impl Into<CreateSelectMenu<'a>>) -> Self {
         Self::SelectMenu(select_menu.into())
     }
-    pub fn into_owned(self) -> CreateActionRow<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateActionRow<'new> {
         match self {
-            Self::Buttons(btns) => CreateActionRow::Buttons(Cow::Owned(
+            Self::Buttons(btns) => CreateActionRow::Buttons(
                 btns.into_owned().into_iter().map(CreateButton::into_owned).collect(),
-            )),
+            ),
             Self::SelectMenu(csm) => CreateActionRow::SelectMenu(csm.into_owned()),
         }
     }
@@ -104,7 +105,8 @@ pub enum CreateComponent<'a> {
 }
 
 impl CreateComponent<'_> {
-    pub fn into_owned(self) -> CreateComponent<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateComponent<'new> {
         match self {
             Self::ActionRow(e) => CreateComponent::ActionRow(e.into_owned()),
             Self::Section(e) => CreateComponent::Section(e.into_owned()),
@@ -171,7 +173,8 @@ impl<'a> CreateSection<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateSection<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateSection<'new> {
         let Self {
             kind,
             components,
@@ -179,13 +182,11 @@ impl<'a> CreateSection<'a> {
         } = self;
         CreateSection {
             kind,
-            components: Cow::Owned(
-                components
-                    .into_owned()
-                    .into_iter()
-                    .map(CreateSectionComponent::into_owned)
-                    .collect(),
-            ),
+            components: components
+                .into_owned()
+                .into_iter()
+                .map(CreateSectionComponent::into_owned)
+                .collect(),
             accessory: accessory.into_owned(),
         }
     }
@@ -200,7 +201,8 @@ pub enum CreateSectionComponent<'a> {
 }
 
 impl CreateSectionComponent<'_> {
-    pub fn into_owned(self) -> CreateSectionComponent<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateSectionComponent<'new> {
         match self {
             Self::TextDisplay(e) => CreateSectionComponent::TextDisplay(e.into_owned()),
         }
@@ -237,7 +239,8 @@ impl<'a> CreateTextDisplay<'a> {
     }
 
     #[must_use]
-    pub fn into_owned(self) -> CreateTextDisplay<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateTextDisplay<'new> {
         let Self {
             kind,
             content,
@@ -259,7 +262,8 @@ pub enum CreateSectionAccessory<'a> {
 }
 
 impl CreateSectionAccessory<'_> {
-    pub fn into_owned(self) -> CreateSectionAccessory<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateSectionAccessory<'new> {
         match self {
             Self::Thumbnail(e) => CreateSectionAccessory::Thumbnail(e.into_owned()),
             Self::Button(e) => CreateSectionAccessory::Button(e.into_owned()),
@@ -309,7 +313,8 @@ impl<'a> CreateThumbnail<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateThumbnail<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateThumbnail<'new> {
         let Self {
             kind,
             media,
@@ -346,7 +351,8 @@ impl<'a> CreateUnfurledMediaItem<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateUnfurledMediaItem<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateUnfurledMediaItem<'new> {
         let Self {
             url,
         } = self;
@@ -393,16 +399,15 @@ impl<'a> CreateMediaGallery<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateMediaGallery<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateMediaGallery<'new> {
         let Self {
             kind,
             items,
         } = self;
         CreateMediaGallery {
             kind,
-            items: Cow::Owned(
-                items.into_owned().into_iter().map(CreateMediaGalleryItem::into_owned).collect(),
-            ),
+            items: items.into_owned().into_iter().map(CreateMediaGalleryItem::into_owned).collect(),
         }
     }
 }
@@ -446,7 +451,8 @@ impl<'a> CreateMediaGalleryItem<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateMediaGalleryItem<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateMediaGalleryItem<'new> {
         let Self {
             media,
             description,
@@ -512,7 +518,8 @@ impl<'a> CreateFile<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateFile<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateFile<'new> {
         let Self {
             kind,
             file,
@@ -630,7 +637,8 @@ impl<'a> CreateContainer<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateContainer<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateContainer<'new> {
         let Self {
             kind,
             accent_color,
@@ -641,13 +649,11 @@ impl<'a> CreateContainer<'a> {
             kind,
             accent_color,
             spoiler,
-            components: Cow::Owned(
-                components
-                    .into_owned()
-                    .into_iter()
-                    .map(CreateContainerComponent::into_owned)
-                    .collect(),
-            ),
+            components: components
+                .into_owned()
+                .into_iter()
+                .map(CreateContainerComponent::into_owned)
+                .collect(),
         }
     }
 }
@@ -666,7 +672,8 @@ pub enum CreateContainerComponent<'a> {
 }
 
 impl CreateContainerComponent<'_> {
-    pub fn into_owned(self) -> CreateContainerComponent<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateContainerComponent<'new> {
         match self {
             Self::ActionRow(e) => CreateContainerComponent::ActionRow(e.into_owned()),
             Self::Section(e) => CreateContainerComponent::Section(e.into_owned()),
@@ -763,7 +770,8 @@ impl<'a> CreateLabel<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateLabel<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateLabel<'new> {
         let Self {
             kind,
             label,
@@ -793,7 +801,8 @@ enum CreateLabelComponent<'a> {
 }
 
 impl CreateLabelComponent<'_> {
-    pub fn into_owned(self) -> CreateLabelComponent<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateLabelComponent<'new> {
         match self {
             Self::SelectMenu(e) => CreateLabelComponent::SelectMenu(e.into_owned()),
             Self::InputText(e) => CreateLabelComponent::InputText(e.into_owned()),
@@ -867,7 +876,8 @@ impl<'a> CreateFileUpload<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateFileUpload<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateFileUpload<'new> {
         let Self {
             kind,
             custom_id,
@@ -882,9 +892,11 @@ impl<'a> CreateFileUpload<'a> {
             min_values,
             max_values,
             required,
-            file_types: Cow::Owned(
-                file_types.into_owned().into_iter().map(|f| f.into_owned().into()).collect(),
-            ),
+            file_types: file_types
+                .into_owned()
+                .into_iter()
+                .map(|f| f.into_owned().into())
+                .collect(),
         }
     }
 }
@@ -926,7 +938,8 @@ impl<'a> CreateRadioGroup<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateRadioGroup<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateRadioGroup<'new> {
         let Self {
             kind,
             custom_id,
@@ -936,9 +949,11 @@ impl<'a> CreateRadioGroup<'a> {
         CreateRadioGroup {
             kind,
             custom_id: custom_id.into_owned().into(),
-            options: Cow::Owned(
-                options.into_owned().into_iter().map(CreateRadioGroupOption::into_owned).collect(),
-            ),
+            options: options
+                .into_owned()
+                .into_iter()
+                .map(CreateRadioGroupOption::into_owned)
+                .collect(),
             required,
         }
     }
@@ -994,7 +1009,8 @@ impl<'a> CreateRadioGroupOption<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateRadioGroupOption<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateRadioGroupOption<'new> {
         let Self {
             label,
             value,
@@ -1079,7 +1095,8 @@ impl<'a> CreateCheckboxGroup<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateCheckboxGroup<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateCheckboxGroup<'new> {
         let Self {
             kind,
             custom_id,
@@ -1091,13 +1108,11 @@ impl<'a> CreateCheckboxGroup<'a> {
         CreateCheckboxGroup {
             kind,
             custom_id: custom_id.into_owned().into(),
-            options: Cow::Owned(
-                options
-                    .into_owned()
-                    .into_iter()
-                    .map(CreateCheckboxGroupOption::into_owned)
-                    .collect(),
-            ),
+            options: options
+                .into_owned()
+                .into_iter()
+                .map(CreateCheckboxGroupOption::into_owned)
+                .collect(),
             min_values,
             max_values,
             required,
@@ -1155,7 +1170,8 @@ impl<'a> CreateCheckboxGroupOption<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateCheckboxGroupOption<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateCheckboxGroupOption<'new> {
         let Self {
             label,
             value,
@@ -1200,7 +1216,8 @@ impl<'a> CreateCheckbox<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateCheckbox<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateCheckbox<'new> {
         let Self {
             kind,
             custom_id,
@@ -1335,7 +1352,8 @@ impl<'a> CreateButton<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateButton<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateButton<'new> {
         let Self {
             style,
             kind,
@@ -1437,18 +1455,17 @@ pub enum CreateSelectMenuKind<'a> {
 
 impl CreateSelectMenuKind<'_> {
     #[must_use]
-    pub fn into_owned(self) -> CreateSelectMenuKind<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateSelectMenuKind<'new> {
         match self {
             CreateSelectMenuKind::String {
                 options,
             } => CreateSelectMenuKind::String {
-                options: Cow::Owned(
-                    options
-                        .into_owned()
-                        .into_iter()
-                        .map(CreateSelectMenuOption::into_owned)
-                        .collect(),
-                ),
+                options: options
+                    .into_owned()
+                    .into_iter()
+                    .map(CreateSelectMenuOption::into_owned)
+                    .collect(),
             },
             CreateSelectMenuKind::User {
                 default_users,
@@ -1616,7 +1633,8 @@ impl<'a> CreateSelectMenu<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateSelectMenu<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateSelectMenu<'new> {
         let Self {
             custom_id,
             placeholder,
@@ -1697,7 +1715,8 @@ impl<'a> CreateSelectMenuOption<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateSelectMenuOption<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateSelectMenuOption<'new> {
         let Self {
             label,
             value,
@@ -1795,7 +1814,8 @@ impl<'a> CreateInputText<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateInputText<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateInputText<'new> {
         let Self {
             kind,
             custom_id,

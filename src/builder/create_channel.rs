@@ -311,7 +311,8 @@ impl<'a> CreateChannel<'a> {
         http.create_channel(guild_id, &self, self.audit_log_reason.as_deref()).await
     }
 
-    pub fn into_owned(self) -> CreateChannel<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateChannel<'new> {
         let Self {
             name,
             kind,
@@ -350,9 +351,11 @@ impl<'a> CreateChannel<'a> {
             video_quality_mode,
             default_auto_archive_duration,
             default_reaction_emoji,
-            available_tags: Cow::Owned(
-                available_tags.into_owned().into_iter().map(CreateForumTag::into_owned).collect(),
-            ),
+            available_tags: available_tags
+                .into_owned()
+                .into_iter()
+                .map(CreateForumTag::into_owned)
+                .collect(),
             default_sort_order,
             default_forum_layout,
             default_thread_rate_limit_per_user,

@@ -203,7 +203,8 @@ impl<'a> DataUri<'a> {
     }
 
     #[must_use]
-    pub fn into_owned(self) -> DataUri<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> DataUri<'new> {
         DataUri(self.0.into_owned().into())
     }
 }

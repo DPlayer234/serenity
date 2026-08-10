@@ -80,7 +80,8 @@ impl<'a> EditProfile<'a> {
         self
     }
 
-    pub fn into_owned(self) -> EditProfile<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> EditProfile<'new> {
         let Self {
             username,
             avatar,

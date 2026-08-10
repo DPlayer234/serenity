@@ -93,7 +93,8 @@ impl<'a> EditAutoModRule<'a> {
         self
     }
 
-    pub fn into_owned(self) -> EditAutoModRule<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> EditAutoModRule<'new> {
         let Self {
             name,
             event_type,

@@ -43,7 +43,8 @@ impl<'a> EditGuildWidget<'a> {
         self
     }
 
-    pub fn into_owned(self) -> EditGuildWidget<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> EditGuildWidget<'new> {
         let Self {
             enabled,
             channel_id,

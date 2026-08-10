@@ -51,7 +51,8 @@ impl<'a> CreateStageInstance<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateStageInstance<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateStageInstance<'new> {
         let Self {
             channel_id,
             topic,

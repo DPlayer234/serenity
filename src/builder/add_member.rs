@@ -99,7 +99,8 @@ impl<'a> AddMember<'a> {
         http.add_guild_member(guild_id, user_id, &self).await
     }
 
-    pub fn into_owned(self) -> AddMember<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> AddMember<'new> {
         let Self {
             access_token,
             nick,

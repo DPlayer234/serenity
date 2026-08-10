@@ -45,7 +45,8 @@ impl<'a> EditCommandPermissions<'a> {
         http.edit_guild_command_permissions(guild_id, command_id, &self).await
     }
 
-    pub fn into_owned(self) -> EditCommandPermissions<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> EditCommandPermissions<'new> {
         let Self {
             permissions,
         } = self;

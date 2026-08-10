@@ -303,7 +303,8 @@ pub enum AutocompleteValue<'a> {
 }
 
 impl AutocompleteValue<'_> {
-    pub fn into_owned(self) -> AutocompleteValue<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> AutocompleteValue<'new> {
         match self {
             AutocompleteValue::String(s) => AutocompleteValue::String(s.into_owned().into()),
             AutocompleteValue::Integer(i) => AutocompleteValue::Integer(i),
@@ -373,7 +374,8 @@ impl<'a> AutocompleteChoice<'a> {
         self
     }
 
-    pub fn into_owned(self) -> AutocompleteChoice<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> AutocompleteChoice<'new> {
         let Self {
             name,
             name_localizations,
@@ -433,11 +435,15 @@ impl<'a> CreateAutocompleteResponse<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateAutocompleteResponse<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateAutocompleteResponse<'new> {
         CreateAutocompleteResponse {
-            choices: Cow::Owned(
-                self.choices.into_owned().into_iter().map(AutocompleteChoice::into_owned).collect(),
-            ),
+            choices: self
+                .choices
+                .into_owned()
+                .into_iter()
+                .map(AutocompleteChoice::into_owned)
+                .collect(),
         }
     }
 
@@ -487,16 +493,19 @@ impl<'a> CreateModal<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateModal<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateModal<'new> {
         let Self {
             components,
             custom_id,
             title,
         } = self;
         CreateModal {
-            components: Cow::Owned(
-                components.into_owned().into_iter().map(CreateModalComponent::into_owned).collect(),
-            ),
+            components: components
+                .into_owned()
+                .into_iter()
+                .map(CreateModalComponent::into_owned)
+                .collect(),
             custom_id: custom_id.into_owned().into(),
             title: title.into_owned().into(),
         }
@@ -512,7 +521,8 @@ pub enum CreateModalComponent<'a> {
 }
 
 impl CreateModalComponent<'_> {
-    pub fn into_owned(self) -> CreateModalComponent<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateModalComponent<'new> {
         match self {
             CreateModalComponent::TextDisplay(t) => {
                 CreateModalComponent::TextDisplay(t.into_owned())

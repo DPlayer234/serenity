@@ -119,7 +119,8 @@ impl<'a> CreateScheduledEvent<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateScheduledEvent<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateScheduledEvent<'new> {
         let Self {
             channel_id,
             entity_metadata,
@@ -167,7 +168,8 @@ pub(crate) struct CreateScheduledEventMetadata<'a> {
 }
 
 impl CreateScheduledEventMetadata<'_> {
-    pub fn into_owned(self) -> CreateScheduledEventMetadata<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateScheduledEventMetadata<'new> {
         CreateScheduledEventMetadata {
             location: self.location.map(|l| l.into_owned().into()),
         }

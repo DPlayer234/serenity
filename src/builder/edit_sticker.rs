@@ -63,7 +63,8 @@ impl<'a> EditSticker<'a> {
         self
     }
 
-    pub fn into_owned(self) -> EditSticker<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> EditSticker<'new> {
         let Self {
             name,
             description,

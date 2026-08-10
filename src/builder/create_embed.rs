@@ -243,7 +243,8 @@ impl<'a> CreateEmbed<'a> {
         length
     }
 
-    pub fn into_owned(self) -> CreateEmbed<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateEmbed<'new> {
         let Self {
             title,
             kind,
@@ -347,7 +348,8 @@ impl<'a> CreateEmbedAuthor<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateEmbedAuthor<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateEmbedAuthor<'new> {
         let Self {
             name,
             url,
@@ -418,7 +420,8 @@ impl<'a> CreateEmbedFooter<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateEmbedFooter<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateEmbedFooter<'new> {
         let Self {
             text,
             icon_url,
@@ -447,7 +450,8 @@ struct CreateEmbedField<'a> {
 }
 
 impl CreateEmbedField<'_> {
-    pub fn into_owned(self) -> CreateEmbedField<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateEmbedField<'new> {
         let Self {
             name,
             value,
@@ -488,7 +492,8 @@ struct CreateEmbedImage<'a> {
 }
 
 impl CreateEmbedImage<'_> {
-    pub fn into_owned(self) -> CreateEmbedImage<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateEmbedImage<'new> {
         let Self {
             url,
             description,

@@ -59,7 +59,8 @@ impl<'a> EditGuildWelcomeScreen<'a> {
         self
     }
 
-    pub fn into_owned(self) -> EditGuildWelcomeScreen<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> EditGuildWelcomeScreen<'new> {
         let Self {
             enabled,
             welcome_channels,
@@ -68,13 +69,11 @@ impl<'a> EditGuildWelcomeScreen<'a> {
         } = self;
         EditGuildWelcomeScreen {
             enabled,
-            welcome_channels: Cow::Owned(
-                welcome_channels
-                    .into_owned()
-                    .into_iter()
-                    .map(CreateGuildWelcomeChannel::into_owned)
-                    .collect(),
-            ),
+            welcome_channels: welcome_channels
+                .into_owned()
+                .into_iter()
+                .map(CreateGuildWelcomeChannel::into_owned)
+                .collect(),
             description: description.map(|d| d.into_owned().into()),
             audit_log_reason: audit_log_reason.map(|r| Cow::Owned(r.into_owned())),
         }
@@ -148,7 +147,8 @@ impl<'a> CreateGuildWelcomeChannel<'a> {
         self
     }
 
-    pub fn into_owned(self) -> CreateGuildWelcomeChannel<'static> {
+    #[doc = include_str!("into_owned_doc.md")]
+    pub fn into_owned<'new>(self) -> CreateGuildWelcomeChannel<'new> {
         let Self {
             channel_id,
             emoji_name,
