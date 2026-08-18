@@ -7,7 +7,7 @@ type Error = Box<dyn std::error::Error + Send + Sync + 'static>;
 fn handle_command(interaction: CommandInteraction) -> CreateInteractionResponse<'static> {
     CreateInteractionResponse::Message(CreateInteractionResponseMessage::new().content(format!(
         "Hello from interactions webhook HTTP server! <@{}>",
-        interaction.user.id
+        interaction.user().id
     )))
 }
 

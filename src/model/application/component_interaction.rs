@@ -40,8 +40,11 @@ pub struct ComponentInteraction {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub member: Option<Box<Member>>,
     /// The `user` object for the invoking user.
-    #[serde(default)]
-    pub user: User,
+    ///
+    /// **Note**: It is only present if the interaction is **not** triggered in a guild.
+    /// Consider calling [`method@ComponentInteraction::user`] instead.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub user: Option<Box<User>>,
     /// A continuation token for responding to the interaction.
     pub token: FixedString,
     /// Always `1`.
@@ -63,6 +66,17 @@ pub struct ComponentInteraction {
     pub context: Option<InteractionContext>,
     /// Attachment size limit in bytes.
     pub attachment_size_limit: u32,
+}
+
+impl ComponentInteraction {
+    /// Gets the `user` object for the invoking user.
+    pub fn user(&self) -> &User {
+        if let Some(member) = &self.member {
+            &member.user
+        } else {
+            self.user.as_deref().expect("user or member should be set")
+        }
+    }
 }
 
 #[cfg(feature = "model")]
@@ -208,8 +222,6 @@ impl<'de> Deserialize<'de> for ComponentInteraction {
         let mut interaction = Self::deserialize(deserializer)?;
         if let (Some(guild_id), Some(member)) = (interaction.guild_id, &mut interaction.member) {
             member.guild_id = guild_id;
-            // If `member` is present, `user` wasn't sent and is still filled with default data
-            interaction.user = member.user.clone();
         }
         Ok(interaction)
     }

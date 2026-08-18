@@ -178,7 +178,7 @@ make_specific_collector!(
     // - the filter name (the name of the generated builder-like method on the collector type)
     // - filter argument type (used as argument of the builder-like method on the collector type)
     // - filter expression (this expressoin must return true to let the event through)
-    author_id: UserId => interaction.user.id == *author_id,
+    author_id: UserId => interaction.user().id == *author_id,
     channel_id: GenericChannelId => interaction.channel_id == *channel_id,
     guild_id: GuildId => interaction.guild_id.is_none_or(|x| x == *guild_id),
     message_id: MessageId => interaction.message.id == *message_id,
@@ -190,7 +190,7 @@ make_specific_collector!(
     Event::InteractionCreate(InteractionCreateEvent {
         interaction: Interaction::Modal(interaction),
     }) => interaction,
-    author_id: UserId => interaction.user.id == *author_id,
+    author_id: UserId => interaction.user().id == *author_id,
     channel_id: GenericChannelId => interaction.channel_id == *channel_id,
     guild_id: GuildId => interaction.guild_id.is_none_or(|g| g == *guild_id),
     message_id: MessageId => interaction.message.as_ref().is_none_or(|m| m.id == *message_id),
