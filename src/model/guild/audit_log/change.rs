@@ -32,7 +32,7 @@ macro_rules! generate_change {
         $key:literal => $name:ident ($type:ty),
     )* ) => {
         #[cfg_attr(feature = "typesize", derive(typesize::derive::TypeSize))]
-        #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
+        #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
         #[non_exhaustive]
         #[serde(tag = "key")]
         #[serde(rename_all = "snake_case")]
@@ -61,9 +61,9 @@ macro_rules! generate_change {
                 #[serde(rename = "new_value")]
                 new: Option<FixedArray<AffectedRole>>,
             },
-            /// Role was removed to a member.
+            /// Role was removed from a member.
             #[serde(rename = "$remove")]
-            RolesRemove {
+            RolesRemoved {
                 #[serde(skip_serializing_if = "Option::is_none")]
                 #[serde(rename = "old_value")]
                 old: Option<FixedArray<AffectedRole>>,
@@ -72,9 +72,21 @@ macro_rules! generate_change {
                 new: Option<FixedArray<AffectedRole>>,
             },
 
+            /// Permissions were updated for a command.
+            #[serde(untagged)]
+            CommandPermissions {
+                #[serde(skip_serializing_if = "Option::is_none")]
+                #[serde(rename = "old_value")]
+                old_value: Option<CommandPermission>,
+                #[serde(skip_serializing_if = "Option::is_none")]
+                #[serde(rename = "new_value")]
+                new_value: Option<CommandPermission>,
+            },
+
             /// Unknown key was changed.
+            #[serde(untagged)]
             Other {
-                name: FixedString,
+                key: FixedString,
                 #[serde(skip_serializing_if = "Option::is_none")]
                 #[serde(rename = "old_value")]
                 old_value: Option<Value>,
@@ -82,21 +94,25 @@ macro_rules! generate_change {
                 #[serde(rename = "new_value")]
                 new_value: Option<Value>,
             },
-
-            /// Unknown key was changed and was invalid
-            #[serde(other)]
-            Unknown
         }
 
         impl Change {
             #[must_use]
-            pub fn key(&self) -> &str {
+            pub fn key(&self) -> FixedString {
                 match self {
-                    $( Self::$name { .. } => $key, )*
-                    Self::RolesAdded { .. } => "$add",
-                    Self::RolesRemove { .. } => "$remove",
-                    Self::Other { name, .. } => name,
-                    Self::Unknown => "unknown",
+                    $( Self::$name { .. } => FixedString::from_static_trunc($key), )*
+                    Self::RolesAdded { .. } => FixedString::from_static_trunc("$add"),
+                    Self::RolesRemoved { .. } => FixedString::from_static_trunc("$remove"),
+                    Self::CommandPermissions { old_value, new_value } => {
+                        if let Some(old_value) = old_value {
+                            FixedString::from_string_trunc(old_value.id.to_string())
+                        } else if let Some (new_value) = new_value {
+                            FixedString::from_string_trunc(new_value.id.to_string())
+                        } else {
+                            FixedString::from_static_trunc("unknown")
+                        }
+                    }
+                    Self::Other { key, .. } => key.clone(),
                 }
             }
         }
@@ -104,85 +120,115 @@ macro_rules! generate_change {
 }
 
 generate_change! {
+    /// Actions that execute when an auto moderation rule is triggered were changed.
     "actions" => Actions(FixedArray<Action>),
     /// AFK channel was changed.
     "afk_channel_id" => AfkChannelId(ChannelId),
     /// AFK timeout duration was changed.
     "afk_timeout" => AfkTimeout(AfkTimeout),
-    /// Permission on a text or voice channel was allowed for a role.
+    /// Allow field of a permission overwrite was changed.
     "allow" => Allow(Permissions),
-    /// Application ID of the added or removed webhook or bot.
+    /// Id of the application associated with an entity was changed.
     "application_id" => ApplicationId(ApplicationId),
-    /// Thread is now archived/unarchived.
+    /// Ids of the set of tags applied to a thread in a forum channel was changed.
+    "applied_tags" => AppliedTags(FixedArray<ForumTagId>),
+    /// Whether a thread is archived was changed.
     "archived" => Archived(bool),
+    /// Entity asset was changed.
     "asset" => Asset(FixedString),
     /// Auto archive duration of a thread was changed.
     "auto_archive_duration" => AutoArchiveDuration(u16),
-    /// Availability of a sticker was changed.
+    /// Availability status was changed.
     "available" => Available(bool),
-    /// User avatar was changed.
+    /// Set of tags that can be used in a forum channel was changed.
+    "available_tags" => AvailableTags(FixedArray<ForumTag>),
+    /// User or webhook avatar was changed.
     "avatar_hash" => AvatarHash(ImageHash),
-    /// Guild banner was changed.
+    /// Banner image was changed.
     "banner_hash" => BannerHash(ImageHash),
     /// Voice channel bitrate was changed.
     "bitrate" => Bitrate(u32),
-    /// Channel for invite code or guild scheduled event was changed.
+    /// Primary color of a server profile banner was changed.
+    "brand_color_primary" => BrandColorPrimary(FixedString),
+    /// Id of the channel associated with an entity was changed.
     "channel_id" => ChannelId(ChannelId),
     /// Invite code was changed.
     "code" => Code(FixedString),
     /// Role color was changed.
     "color" => Color(u32),
+    /// Role colors were changed.
+    "colors" => Colors(RoleColours),
     /// Member timeout state was changed.
     "communication_disabled_until" => CommunicationDisabledUntil(Timestamp),
-    /// User was server deafened/undeafened.
+    /// whether a user is deafened in voice channels was changed.
     "deaf" => Deaf(bool),
     /// Default auto archive duration for newly created threads was changed.
     "default_auto_archive_duration" => DefaultAutoArchiveDuration(u16),
+    /// Default channels for onboarding were changed.
+    "default_channel_ids" => DefaultChannelIds(FixedArray<ChannelId>),
     /// Default message notification level for a server was changed.
     "default_message_notifications" => DefaultMessageNotifications(DefaultMessageNotificationLevel),
-    /// Permission on a text or voice channel was denied for a role.
+    /// Emoji to show in the add reaction button on a thread in a forum channel was changed.
+    "default_reaction_emoji" => DefaultReactionEmoji(ForumEmoji),
+    /// Initial rate limit per user to set on newly created threads in a channel was changed.
+    "default_thread_rate_limit_per_user" => DefaultThreadRateLimitPerUser(u16),
+    /// Deny field of a permission overwrite was changed.
     "deny" => Deny(Permissions),
-    /// Description for guild, sticker, or guild scheduled event was changed.
+    /// Description of an entity was changed.
     "description" => Description(FixedString),
     /// Guild's discovery splash was changed.
     "discovery_splash_hash" => DiscoverySplashHash(ImageHash),
+    /// Id of the emoji for a soundboard sound was changed.
+    "emoji_id" => EmojiId(EmojiId),
+    /// Unicode character of the emoji for a soundboard sound was changed.
+    "emoji_name" => EmojiName(FixedString),
+    /// Enabled status was changed.
     "enabled" => Enabled(bool),
-    /// Integration emoticons was enabled/disabled.
+    /// Whether emoticons should be synced for an integration was changed.
     "enable_emoticons" => EnableEmoticons(bool),
-    /// Entity type of guild scheduled event was changed.
+    /// Entity type of a scheduled event was changed.
     "entity_type" => EntityType(u64),
+    /// Event type of an auto moderation rule was changed.
     "event_type" => EventType(AutomodEventType),
+    /// Channels not affected by an auto moderation rule were changed.
     "exempt_channels" => ExemptChannels(FixedArray<ChannelId>),
+    /// Roles not affected by an auto moderation rule were changed.
     "exempt_roles" => ExemptRoles(FixedArray<RoleId>),
-    /// Behavior of the expiration of an integration was changed.
+    /// Behavior of expiring subscribers for an integration was changed.
     "expire_behavior" => ExpireBehavior(u64),
-    /// Grace period of the expiration of an integration was changed.
+    /// Grace period before expiring subscribers for an integration was changed.
     "expire_grace_period" => ExpireGracePeriod(u64),
     /// Explicit content filter level of a guild was changed.
     "explicit_content_filter" => ExplicitContentFilter(ExplicitContentFilter),
-    /// Unknown but sent by discord
+    /// Flags of an entity were changed.
     "flags" => Flags(u64),
     /// Format type of a sticker was changed.
     "format_type" => FormatType(StickerFormatType),
-    /// Guild a sticker is in was changed.
+    /// Ids of games included in a server profile were changed.
+    "game_application_ids" => GameApplicationIds(FixedArray<ApplicationId>),
+    /// Id of the guild associated with an entity was changed.
     "guild_id" => GuildId(GuildId),
-    /// Role is now displayed/no longer displayed separate from online users.
+    /// Whether a role is pinned in the user listing was changed.
     "hoist" => Hoist(bool),
-    /// Guild icon was changed.
+    /// Guild or role icon was changed.
     "icon_hash" => IconHash(ImageHash),
-    /// Guild scheduled event cover image was changed.
+    /// Id of an entity was changed.
     "id" => Id(GenericId),
-    /// ID of the changed entity.
+    /// Cover image of a scheduled event was changed.
     "image_hash" => ImageHash(ImageHash),
+    /// Whether a prompt is present in an onboarding flow was changed.
+    "in_onboarding" => InOnboarding(bool),
     /// Private thread's invitable state was changed.
     "invitable" => Invitable(bool),
-    /// ID of the user who created the invite.
+    /// Id of the user who created an invite was changed.
     "inviter_id" => InviterId(UserId),
-    /// Location for a guild scheduled event was changed.
+    /// Location for a scheduled event was changed.
     "location" => Location(FixedString),
-    /// Thread was locked/unlocked.
+    /// Locked status of a thread was changed.
     "locked" => Locked(bool),
-    /// How long invite code lasts was changed.
+    /// Whether users must apply to join a guild was changed.
+    "manual_approval_enabled" => ManualApprovalEnabled(bool),
+    /// How long an invite code lasts was changed.
     "max_age" => MaxAge(u32),
     /// Maximum uses of an invite was changed.
     "max_uses" => MaxUses(u8),
@@ -190,67 +236,105 @@ generate_change! {
     "mentionable" => Mentionable(bool),
     /// Multi-factor authentication requirement was changed.
     "mfa_level" => MfaLevel(MfaLevel),
-    /// User was server muted/unmuted.
+    /// Whether a user is server muted was changed.
     "mute" => Mute(bool),
     /// Name of an entity was changed.
     "name" => Name(FixedString),
+    // Undocumented type: server guide new member to-do's
+    // "new_member_actions" => NewMemberActions(FixedArray<>),
     /// Nickname of a member was changed.
     "nick" => Nick(FixedString),
-    /// Channel NSFW restriction was changed.
+    /// Whether a channel is age-restricted was changed.
     "nsfw" => Nsfw(bool),
     /// Owner of a guild was changed.
     "owner_id" => OwnerId(UserId),
     /// Permissions on a channel were changed.
     "permission_overwrites" => PermissionOverwrites(FixedArray<PermissionOverwrite>),
-    /// Permissions for a role were changed.
+    /// Permissions for an entity were changed.
     "permissions" => Permissions(Permissions),
     /// Channel or role position was changed.
     "position" => Position(u32),
     /// Preferred locale of a guild was changed.
     "preferred_locale" => PreferredLocale(FixedString),
-    /// Privacy level of the stage instance was changed.
+    /// Whether a guild has the boost progress bar enabled was changed.
+    "premium_progress_bar_enabled" => PremiumProgressBarEnabled(bool),
+    /// Privacy level of a stage instance was changed.
     "privacy_level" => PrivacyLevel(u64),
     /// Number of days after which inactive and role-unassigned members are kicked was changed.
     "prune_delete_days" => PruneDeleteDays(u64),
-    /// ID of the public updates channel was changed.
+    /// Id of a public updates channel was changed.
     "public_updates_channel_id" => PublicUpdatesChannelId(ChannelId),
-    /// Ratelimit per user in a text channel was changed.
+    /// Rate limit per user in a text channel was changed.
     "rate_limit_per_user" => RateLimitPerUser(u16),
     /// Region of a guild was changed.
     "region" => Region(FixedString),
-    /// ID of the rules channel was changed.
+    /// Whether an onboarding prompt is required was changed.
+    "required" => Required(bool),
+    // Undocumented type: server guide resource channels
+    // "resource_channels" => ResourceChannels(FixedArray<>),
+    /// Roles assigned to a user upon accepting an invite were changed.
+    "role_ids" => RoleIds(FixedArray<RoleId>),
+    /// Voice region Id for a voice or stage channel was changed.
+    "rtc_region" => RtcRegion(FixedString),
+    /// Id of a rules channel was changed.
     "rules_channel_id" => RulesChannelId(ChannelId),
-    /// Invite splash page artwork was changed.
+    /// End time of a scheduled event was changed.
+    "scheduled_end_time" => ScheduledEndTime(Timestamp),
+    /// Start time of a scheduled event was changed.
+    "scheduled_start_time" => ScheduledStartTime(Timestamp),
+    /// Whether only one option can be selected for an onboarding prompt was changed.
+    "single_select" => SingleSelect(bool),
+    /// Id of a soundboard sound was changed.
+    "sound_id" => SoundId(SoundId),
+    /// Guild splash image was changed.
     "splash_hash" => SplashHash(ImageHash),
-    /// Status of guild scheduled event was changed.
+    /// Status of a scheduled event was changed.
     "status" => Status(u64),
     /// System channel settings were changed.
     "system_channel_flags" => SystemChannelFlags(SystemChannelFlags),
-    /// ID of the system channel was changed.
+    /// Id of a system channel was changed.
     "system_channel_id" => SystemChannelId(ChannelId),
-    /// Related emoji of a sticker was changed.
+    /// Autocomplete/suggestion tags (related emoji) of a sticker were changed.
     "tags" => Tags(FixedString),
-    /// Whether an invite is temporary or never expires was changed.
+    /// Whether an invite only grants temporary membership was changed.
     "temporary" => Temporary(bool),
+    /// Title of an entity was changed.
+    "title" => Title(FixedString),
     /// Topic of a text channel or stage instance was changed.
     "topic" => Topic(FixedString),
+    // Undocumented type: server profile traits
+    // "traits" => Traits(FixedArray<>),
+    /// Trigger metadata of an auto moderation rule was changed.
     "trigger_metadata" => TriggerMetadata(TriggerMetadata),
+    /// Trigger type of an auto moderation rule was changed.
     "trigger_type" => TriggerType(TriggerType),
-    /// Type of a created entity.
+    /// Type of an entity was changed.
     "type" => Type(EntityType),
     /// Unicode emoji of a role icon was changed.
     "unicode_emoji" => UnicodeEmoji(FixedString),
-    /// Maximum number of users in a voice channel was changed.
+    /// Id of the user associated with an entity was changed.
+    "user_id" => UserId(UserId),
+    /// User limit of a voice channel was changed.
     "user_limit" => UserLimit(NonMaxU16),
-    /// Number of uses of an invite was changed.
+    /// Number of times an invite has been used was changed.
     "uses" => Uses(u64),
     /// Guild invite vanity url was changed.
     "vanity_url_code" => VanityUrlCode(FixedString),
+    /// Whether server rules are enabled was changed.
+    "verification_enabled" => VerificationEnabled(bool),
     /// Required verification level for new members was changed.
     "verification_level" => VerificationLevel(VerificationLevel),
-    /// Channel of the server widget was changed.
+    /// Video quality mode for a voice channel was changed.
+    "video_quality_mode" => VideoQualityMode(VideoQualityMode),
+    // Undocumented type: server profile visibility
+    // "visibility" => Visibility(),
+    /// Volume of a soundboard sound was changed.
+    "volume" => Volume(f64),
+    // Undocumented type: server guide welcome message
+    // "welcome_message" => WelcomeMessage(),
+    /// Channel of a server widget was changed.
     "widget_channel_id" => WidgetChannelId(ChannelId),
-    /// Whether a widget is enabled or not was changed.
+    /// Whether a server widget is enabled was changed.
     "widget_enabled" => WidgetEnabled(bool),
 }
 
