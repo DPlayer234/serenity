@@ -79,11 +79,11 @@ where
     T: CacheHttp,
 {
     fn http(&self) -> &Http {
-        (*self).http()
+        (**self).http()
     }
     #[cfg(feature = "cache")]
     fn cache(&self) -> Option<&Arc<Cache>> {
-        (*self).cache()
+        (**self).cache()
     }
 }
 

@@ -949,7 +949,7 @@ impl GuildId {
     /// # Errors
     ///
     /// Returns an [`Error::Http`] if the current user is not in the guild.
-    pub async fn to_partial_guild(self, cache_http: impl CacheHttp) -> Result<PartialGuild> {
+    pub async fn to_partial_guild(self, cache_http: &dyn CacheHttp) -> Result<PartialGuild> {
         #[cfg(feature = "cache")]
         {
             if let Some(cache) = cache_http.cache()
@@ -1088,7 +1088,7 @@ impl GuildId {
     ///
     /// Returns an [`Error::Http`] if the user is not in the guild, or if the guild is otherwise
     /// unavailable
-    pub async fn member(self, cache_http: impl CacheHttp, user_id: UserId) -> Result<Member> {
+    pub async fn member(self, cache_http: &dyn CacheHttp, user_id: UserId) -> Result<Member> {
         #[cfg(feature = "cache")]
         {
             if let Some(cache) = cache_http.cache()
@@ -1634,7 +1634,7 @@ impl GuildId {
     /// See [`CreateSoundboard::execute`] for a list of possible errors.
     pub async fn create_soundboard(
         self,
-        cache_http: impl CacheHttp,
+        cache_http: &dyn CacheHttp,
         builder: CreateSoundboard<'_>,
     ) -> Result<Soundboard> {
         builder.execute(cache_http, self).await
@@ -1647,7 +1647,7 @@ impl GuildId {
     /// See [`EditSoundboard::execute`] for a list of possible errors.
     pub async fn edit_soundboard(
         self,
-        cache_http: impl CacheHttp,
+        cache_http: &dyn CacheHttp,
         sound_id: SoundId,
         builder: EditSoundboard<'_>,
     ) -> Result<Soundboard> {

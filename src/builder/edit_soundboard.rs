@@ -93,7 +93,7 @@ impl<'a> EditSoundboard<'a> {
     #[cfg(feature = "http")]
     pub async fn execute(
         self,
-        cache_http: impl CacheHttp,
+        cache_http: &dyn CacheHttp,
         guild_id: GuildId,
         sound_id: SoundId,
     ) -> Result<Soundboard> {

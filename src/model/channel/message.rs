@@ -223,7 +223,7 @@ impl Message {
     /// # Errors
     ///
     /// Can return an error if the HTTP request fails.
-    pub async fn channel(&self, cache_http: impl CacheHttp) -> Result<Channel> {
+    pub async fn channel(&self, cache_http: &dyn CacheHttp) -> Result<Channel> {
         self.channel_id.to_channel(cache_http, self.guild_id).await
     }
 
@@ -234,7 +234,7 @@ impl Message {
     /// # Errors
     ///
     /// Can return an error if the HTTP request fails, or this is not called in a guild channel.
-    pub async fn guild_channel(&self, cache_http: impl CacheHttp) -> Result<GuildChannel> {
+    pub async fn guild_channel(&self, cache_http: &dyn CacheHttp) -> Result<GuildChannel> {
         self.channel_id.expect_channel().to_guild_channel(cache_http, self.guild_id).await
     }
 
@@ -245,7 +245,7 @@ impl Message {
     /// # Errors
     ///
     /// Can return an error if the HTTP request fails, or this is not called in a guild thread.
-    pub async fn guild_thread(&self, cache_http: impl CacheHttp) -> Result<GuildThread> {
+    pub async fn guild_thread(&self, cache_http: &dyn CacheHttp) -> Result<GuildThread> {
         self.channel_id.expect_thread().to_thread(cache_http, self.guild_id).await
     }
 
@@ -398,7 +398,7 @@ impl Message {
     /// [Manage Messages]: Permissions::MANAGE_MESSAGES
     pub async fn edit(
         &mut self,
-        cache_http: impl CacheHttp,
+        cache_http: &dyn CacheHttp,
         builder: EditMessage<'_>,
     ) -> Result<()> {
         if let Some(flags) = self.flags
@@ -477,7 +477,7 @@ impl Message {
     /// # Errors
     ///
     /// [`ModelError::ItemMissing`] is returned if [`Self::guild_id`] is [`None`].
-    pub async fn member(&self, cache_http: impl CacheHttp) -> Result<Member> {
+    pub async fn member(&self, cache_http: &dyn CacheHttp) -> Result<Member> {
         match self.guild_id {
             Some(guild_id) => guild_id.member(cache_http, self.author.id).await,
             None => Err(Error::Model(ModelError::ItemMissing)),
@@ -584,7 +584,7 @@ impl Message {
     ///
     /// May return [`Error::Http`] if the `cache` feature is not enabled, or if the cache is
     /// otherwise unavailable.
-    pub async fn mentions_me(&self, cache_http: impl CacheHttp) -> Result<bool> {
+    pub async fn mentions_me(&self, cache_http: &dyn CacheHttp) -> Result<bool> {
         #[cfg(feature = "cache")]
         {
             if let Some(cache) = cache_http.cache() {
@@ -621,7 +621,7 @@ impl Message {
     /// Tries to return author's nickname in the current channel's guild.
     ///
     /// Refer to [`User::nick_in()`] inside and [`None`] outside of a guild.
-    pub async fn author_nick(&self, cache_http: impl CacheHttp) -> Option<String> {
+    pub async fn author_nick(&self, cache_http: &dyn CacheHttp) -> Option<String> {
         self.author.nick_in(cache_http, self.guild_id?).await
     }
 
@@ -633,7 +633,7 @@ impl Message {
     }
 
     /// Retrieves the message channel's category ID if the channel has one.
-    pub async fn category_id(&self, cache_http: impl CacheHttp) -> Option<ChannelId> {
+    pub async fn category_id(&self, cache_http: &dyn CacheHttp) -> Option<ChannelId> {
         #[cfg(feature = "cache")]
         if let Some(cache) = cache_http.cache()
             && let Some(guild) = cache.guild(self.guild_id?)

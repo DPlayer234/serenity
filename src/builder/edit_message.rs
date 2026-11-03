@@ -225,7 +225,7 @@ impl<'a> EditMessage<'a> {
     #[cfg_attr(not(feature = "cache"), allow(unused_variables))]
     pub async fn execute(
         mut self,
-        cache_http: impl CacheHttp,
+        cache_http: &dyn CacheHttp,
         channel_id: GenericChannelId,
         message_id: MessageId,
         user_id: Option<UserId>,

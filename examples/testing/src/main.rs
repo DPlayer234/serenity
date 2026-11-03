@@ -64,7 +64,7 @@ async fn message(ctx: &Context, msg: &Message) -> Result<(), serenity::Error> {
             )
             .await?;
         // Pre-PR, this falsely triggered a MODEL_TYPE_CONVERT Discord error
-        msg.edit(&ctx, EditMessage::new().attachments(EditAttachments::keep_all(&msg))).await?;
+        msg.edit(ctx, EditMessage::new().attachments(EditAttachments::keep_all(&msg))).await?;
     } else if msg.content == "unifiedattachments" {
         let mut msg =
             channel_id.send_message(&ctx.http, CreateMessage::new().content("works")).await?;
@@ -165,8 +165,8 @@ async fn message(ctx: &Context, msg: &Message) -> Result<(), serenity::Error> {
             )
             .await?;
     } else if msg.content == "assigntags" {
-        let forum_id = msg.guild_channel(&ctx).await?.parent_id.unwrap();
-        let forum = forum_id.to_guild_channel(&ctx, msg.guild_id).await?;
+        let forum_id = msg.guild_channel(ctx).await?.parent_id.unwrap();
+        let forum = forum_id.to_guild_channel(ctx, msg.guild_id).await?;
         channel_id
             .expect_thread()
             .edit(
@@ -188,7 +188,7 @@ async fn message(ctx: &Context, msg: &Message) -> Result<(), serenity::Error> {
             _ => None,
         });
         let _ = tokio::time::timeout(Duration::from_millis(2000), message_updates.next()).await;
-        msg.edit(&ctx, EditMessage::new().suppress_embeds(true)).await?;
+        msg.edit(ctx, EditMessage::new().suppress_embeds(true)).await?;
     } else if msg.content == "voicemessage" {
         let audio_url =
             "https://upload.wikimedia.org/wikipedia/commons/8/81/Short_Silent%2C_Empty_Audio.ogg";
@@ -201,7 +201,7 @@ async fn message(ctx: &Context, msg: &Message) -> Result<(), serenity::Error> {
     } else if let Some(channel) = msg.content.strip_prefix("movetorootandback") {
         let mut channel = {
             let channel_id = channel.trim().parse::<ChannelId>().unwrap();
-            channel_id.to_guild_channel(&ctx, msg.guild_id).await.unwrap()
+            channel_id.to_guild_channel(ctx, msg.guild_id).await.unwrap()
         };
 
         let parent_id = channel.parent_id.unwrap();

@@ -182,7 +182,7 @@ impl PartialGuild {
     ///
     /// Returns [`Error::Http`] if the current user is not
     /// in the guild.
-    pub async fn get(cache_http: impl CacheHttp, guild_id: GuildId) -> Result<PartialGuild> {
+    pub async fn get(cache_http: &dyn CacheHttp, guild_id: GuildId) -> Result<PartialGuild> {
         guild_id.to_partial_guild(cache_http).await
     }
 

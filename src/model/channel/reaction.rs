@@ -101,7 +101,7 @@ impl Reaction {
     /// exists.
     ///
     /// [Read Message History]: Permissions::READ_MESSAGE_HISTORY
-    pub async fn channel(&self, cache_http: impl CacheHttp) -> Result<Channel> {
+    pub async fn channel(&self, cache_http: &dyn CacheHttp) -> Result<Channel> {
         self.channel_id.to_channel(cache_http, self.guild_id).await
     }
 
@@ -148,7 +148,7 @@ impl Reaction {
     /// the message was deleted.
     ///
     /// [Read Message History]: Permissions::READ_MESSAGE_HISTORY
-    pub async fn message(&self, cache_http: impl CacheHttp) -> Result<Message> {
+    pub async fn message(&self, cache_http: &dyn CacheHttp) -> Result<Message> {
         self.channel_id.message(cache_http, self.message_id).await
     }
 
@@ -161,7 +161,7 @@ impl Reaction {
     ///
     /// Returns [`Error::Http`] if the user who made the reaction is unable to be retrieved from
     /// the API.
-    pub async fn user(&self, cache_http: impl CacheHttp) -> Result<User> {
+    pub async fn user(&self, cache_http: &dyn CacheHttp) -> Result<User> {
         if let Some(id) = self.user_id {
             id.to_user(cache_http).await
         } else {

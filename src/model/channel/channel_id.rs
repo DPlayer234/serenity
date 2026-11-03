@@ -53,7 +53,7 @@ impl ChannelId {
     /// Errors if the HTTP fallback fails, or if the channel does not come from the guild passed.
     pub async fn to_guild_channel(
         self,
-        cache_http: impl CacheHttp,
+        cache_http: &dyn CacheHttp,
         guild_id: Option<GuildId>,
     ) -> Result<GuildChannel> {
         #[cfg(feature = "cache")]
@@ -647,7 +647,7 @@ impl GenericChannelId {
     #[cfg_attr(not(feature = "cache"), expect(unused_variables))]
     pub async fn to_channel(
         self,
-        cache_http: impl CacheHttp,
+        cache_http: &dyn CacheHttp,
         guild_id: Option<GuildId>,
     ) -> Result<Channel> {
         #[cfg_attr(not(feature = "temp_cache"), expect(unused_variables))]
@@ -712,7 +712,7 @@ impl GenericChannelId {
     /// [Read Message History]: Permissions::READ_MESSAGE_HISTORY
     pub async fn message(
         self,
-        cache_http: impl CacheHttp,
+        cache_http: &dyn CacheHttp,
         message_id: MessageId,
     ) -> Result<Message> {
         #[cfg(feature = "cache")]
@@ -747,7 +747,7 @@ impl GenericChannelId {
     /// [Read Message History]: Permissions::READ_MESSAGE_HISTORY
     pub async fn messages(
         self,
-        cache_http: impl CacheHttp,
+        cache_http: &dyn CacheHttp,
         builder: GetMessages,
     ) -> Result<Vec<Message>> {
         builder.execute(cache_http, self).await
@@ -783,7 +783,7 @@ impl GenericChannelId {
     /// ```
     pub fn messages_iter(
         self,
-        cache_http: &impl CacheHttp,
+        cache_http: &dyn CacheHttp,
     ) -> impl Stream<Item = Result<Message>> + '_ {
         MessagesIter::stream(cache_http, self)
     }
@@ -817,7 +817,7 @@ impl GenericChannelId {
     /// [Read Message History]: Permissions::READ_MESSAGE_HISTORY
     pub async fn pins(
         self,
-        cache_http: impl CacheHttp,
+        cache_http: &dyn CacheHttp,
         before: Option<Timestamp>,
         limit: Option<u8>,
     ) -> Result<MessagePinsPage> {
@@ -1134,7 +1134,7 @@ pub struct MessagesIter<'a> {
 
 #[cfg(feature = "model")]
 impl<'a> MessagesIter<'a> {
-    fn new(cache_http: &'a impl CacheHttp, channel_id: GenericChannelId) -> MessagesIter<'a> {
+    fn new(cache_http: &'a dyn CacheHttp, channel_id: GenericChannelId) -> MessagesIter<'a> {
         MessagesIter {
             http: cache_http.http(),
             #[cfg(feature = "cache")]
@@ -1182,7 +1182,8 @@ impl<'a> MessagesIter<'a> {
         if let Some(before) = self.before {
             builder = builder.before(before);
         }
-        self.buffer = self.channel_id.messages(self.cache_http(), builder).await?;
+        let new_buffer = self.channel_id.messages(&self.cache_http(), builder).await?;
+        self.buffer = new_buffer;
 
         self.buffer.reverse();
 
@@ -1222,7 +1223,7 @@ impl<'a> MessagesIter<'a> {
     /// # }
     /// ```
     pub fn stream(
-        cache_http: &'a impl CacheHttp,
+        cache_http: &'a dyn CacheHttp,
         channel_id: GenericChannelId,
     ) -> impl Stream<Item = Result<Message>> + 'a {
         let init_state = MessagesIter::new(cache_http, channel_id);

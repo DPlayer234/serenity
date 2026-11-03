@@ -492,7 +492,7 @@ impl User {
     /// # Errors
     ///
     /// See [`UserId::create_dm_channel`] for what errors may be returned.
-    pub async fn create_dm_channel(&self, cache_http: impl CacheHttp) -> Result<PrivateChannel> {
+    pub async fn create_dm_channel(&self, cache_http: &dyn CacheHttp) -> Result<PrivateChannel> {
         if self.bot() {
             return Err(Error::Model(ModelError::MessagingBot));
         }
@@ -550,7 +550,7 @@ impl User {
     /// May also return an [`Error::Json`] if there is an error in deserializing the API response.
     pub async fn has_role(
         &self,
-        cache_http: impl CacheHttp,
+        cache_http: &dyn CacheHttp,
         guild_id: GuildId,
         role: RoleId,
     ) -> Result<bool> {
@@ -564,7 +564,7 @@ impl User {
     /// # Errors
     ///
     /// See [`UserId::to_user`] for what errors may be returned.
-    pub async fn refresh(&mut self, cache_http: impl CacheHttp) -> Result<()> {
+    pub async fn refresh(&mut self, cache_http: &dyn CacheHttp) -> Result<()> {
         *self = self.id.to_user(cache_http).await?;
 
         Ok(())
@@ -610,7 +610,7 @@ impl User {
     /// Returns the user's nickname in the given `guild_id`.
     ///
     /// If none is used, it returns [`None`].
-    pub async fn nick_in(&self, cache_http: impl CacheHttp, guild_id: GuildId) -> Option<String> {
+    pub async fn nick_in(&self, cache_http: &dyn CacheHttp, guild_id: GuildId) -> Option<String> {
         // This can't be removed because `GuildId::member` clones the entire `Member` struct if
         // it's present in the cache, which is expensive.
         #[cfg(feature = "cache")]
@@ -655,7 +655,7 @@ impl UserId {
     /// returned by the Discord API.
     ///
     /// [current user]: CurrentUser
-    pub async fn create_dm_channel(self, cache_http: impl CacheHttp) -> Result<PrivateChannel> {
+    pub async fn create_dm_channel(self, cache_http: &dyn CacheHttp) -> Result<PrivateChannel> {
         #[derive(serde::Serialize)]
         struct CreateDmChannel {
             recipient_id: UserId,
@@ -724,12 +724,12 @@ impl UserId {
     /// Returns an [`Error::Json`] if there is an error deserializing the API response.
     pub async fn direct_message(
         self,
-        cache_http: impl CacheHttp,
+        cache_http: &dyn CacheHttp,
         builder: CreateMessage<'_>,
     ) -> Result<Message> {
         // Do not refactor this to a one liner. The PrivateChannel from `create_dm_channel`
         // should be dropped before the `send_message` call to avoid bloating future sizes.
-        let dm_channel_id = self.create_dm_channel(&cache_http).await?.id;
+        let dm_channel_id = self.create_dm_channel(cache_http).await?.id;
         dm_channel_id.widen().send_message(cache_http.http(), builder).await
     }
 
@@ -748,7 +748,7 @@ impl UserId {
     /// otherwise cannot be fetched.
     ///
     /// May also return an [`Error::Json`] if there is an error in deserializing the user.
-    pub async fn to_user(self, cache_http: impl CacheHttp) -> Result<User> {
+    pub async fn to_user(self, cache_http: &dyn CacheHttp) -> Result<User> {
         #[cfg(feature = "temp_cache")]
         {
             if let Some(cache) = cache_http.cache()

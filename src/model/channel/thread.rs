@@ -29,7 +29,7 @@ impl ThreadId {
     /// Errors if the HTTP fallback fails, or if the channel does not come from the guild passed.
     pub async fn to_thread(
         self,
-        cache_http: impl CacheHttp,
+        cache_http: &dyn CacheHttp,
         guild_id: Option<GuildId>,
     ) -> Result<GuildThread> {
         #[cfg(feature = "cache")]

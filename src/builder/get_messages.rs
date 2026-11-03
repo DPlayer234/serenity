@@ -103,7 +103,7 @@ impl GetMessages {
     #[cfg(feature = "http")]
     pub async fn execute(
         self,
-        cache_http: impl CacheHttp,
+        cache_http: &dyn CacheHttp,
         channel_id: GenericChannelId,
     ) -> Result<Vec<Message>> {
         let http = cache_http.http();
