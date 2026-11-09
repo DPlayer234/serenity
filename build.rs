@@ -16,6 +16,19 @@ compile_error!(
     If you are unsure, go with `rustls_backend`."
 );
 
+#[cfg(all(
+    feature = "gateway",
+    not(any(
+        feature = "payload_compression",
+        feature = "transport_compression_zlib",
+        feature = "transport_compression_zstd"
+    ))
+))]
+compile_error!(
+    "You have the `gateway` feature enabled; at least one of the following features must be enabled: \
+    `payload_compression`, `transport_compression_zlib`, `transport_compression_zstd`"
+);
+
 fn main() {
     println!("cargo:rustc-check-cfg=cfg(tokio_unstable, ignore_serenity_deprecated)");
 }

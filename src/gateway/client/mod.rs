@@ -118,7 +118,7 @@ impl ClientBuilder {
             raw_event_handler: None,
             presence: PresenceData::default(),
             wait_time_between_shard_start: DEFAULT_WAIT_BETWEEN_SHARD_START,
-            compression: TransportCompression::None,
+            compression: TransportCompression::client_default(),
         }
     }
 

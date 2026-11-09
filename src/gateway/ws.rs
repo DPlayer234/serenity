@@ -1,7 +1,9 @@
 use std::env::consts;
+#[cfg(feature = "payload_compression")]
 use std::io::Read;
 use std::time::{Duration, SystemTime};
 
+#[cfg(feature = "payload_compression")]
 use flate2::read::ZlibDecoder;
 #[cfg(feature = "transport_compression_zlib")]
 use flate2::write::ZlibDecoder as ZlibWriter;
@@ -17,7 +19,7 @@ use tokio_tungstenite::tungstenite::protocol::{
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream, connect_async_with_config};
 #[cfg(feature = "tracing_instrument")]
 use tracing::instrument;
-use tracing::{debug, trace, warn};
+use tracing::{debug, trace};
 use url::Url;
 #[cfg(feature = "transport_compression_zstd")]
 use zstd::stream::write::Decoder as ZstdWriter;
@@ -109,27 +111,39 @@ struct WebSocketMessage<'a> {
 }
 
 enum Compression {
-    Payload {
-        decompressed: Vec<u8>,
-    },
+    #[cfg(feature = "payload_compression")]
+    Payload { decompressed: Vec<u8> },
 
     #[cfg(feature = "transport_compression_zlib")]
-    Zlib {
-        decoder: ZlibWriter<Vec<u8>>,
-        compressed: Vec<u8>,
-    },
+    Zlib { decoder: ZlibWriter<Vec<u8>>, compressed: Vec<u8> },
 
     #[cfg(feature = "transport_compression_zstd")]
-    Zstd {
-        decoder: ZstdWriter<'static, Vec<u8>>,
-    },
+    Zstd { decoder: ZstdWriter<'static, Vec<u8>> },
 }
 
 impl Compression {
     const DECOMPRESSED_CAPACITY: usize = 174_504;
 
+    fn identify_compress(&self) -> bool {
+        match *self {
+            #[cfg(feature = "payload_compression")]
+            Compression::Payload {
+                ..
+            } => true,
+            #[cfg(feature = "transport_compression_zlib")]
+            Compression::Zlib {
+                ..
+            } => false,
+            #[cfg(feature = "transport_compression_zstd")]
+            Compression::Zstd {
+                ..
+            } => false,
+        }
+    }
+
     fn inflate(&mut self, slice: &[u8]) -> Result<Option<&[u8]>> {
         match self {
+            #[cfg(feature = "payload_compression")]
             Compression::Payload {
                 decompressed,
             } => {
@@ -137,7 +151,7 @@ impl Compression {
                 decompressed.reserve(Self::DECOMPRESSED_CAPACITY);
 
                 ZlibDecoder::new(slice).read_to_end(decompressed).map_err(|why| {
-                    warn!("Err decompressing bytes: {why:?}");
+                    tracing::warn!("Err decompressing bytes: {why:?}");
                     why
                 })?;
 
@@ -163,7 +177,7 @@ impl Compression {
 
                 decoder.get_mut().clear();
                 decoder.write_all(compressed).map_err(|why| {
-                    warn!("Err decompressing bytes: {why:?}");
+                    tracing::warn!("Err decompressing bytes: {why:?}");
                     why
                 })?;
                 decoder.flush()?;
@@ -180,7 +194,7 @@ impl Compression {
 
                 decoder.get_mut().clear();
                 decoder.write_all(slice).map_err(|why| {
-                    warn!("Err decompressing bytes: {why:?}");
+                    tracing::warn!("Err decompressing bytes: {why:?}");
                     why
                 })?;
                 decoder.flush()?;
@@ -194,6 +208,7 @@ impl Compression {
 impl From<TransportCompression> for Compression {
     fn from(value: TransportCompression) -> Self {
         match value {
+            #[cfg(feature = "payload_compression")]
             TransportCompression::None => Compression::Payload {
                 decompressed: Vec::new(),
             },
@@ -395,7 +410,7 @@ impl WsClient {
                 token,
                 shard,
                 intents,
-                compress: matches!(self.compression, Compression::Payload { .. }),
+                compress: self.compression.identify_compress(),
                 large_threshold: constants::LARGE_THRESHOLD,
                 properties: IdentifyProperties {
                     browser: "serenity",

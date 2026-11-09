@@ -80,8 +80,8 @@ default_native_tls = ["default_no_backend", "native_tls_backend"]
 default_no_backend = [
     "cache",
     "framework",
+    "payload_compression",
     "transport_compression_zlib",
-    "transport_compression_zstd",
 ]
 
 # Enables builder structs to configure Discord HTTP requests. Without this feature, you have to
@@ -104,6 +104,8 @@ http = ["dashmap", "mime", "mime_guess", "percent-encoding"]
 # Note: the model type definitions themselves are always active, regardless of this feature.
 # TODO: remove dependeny on utils feature
 model = ["builder", "http", "utils"]
+# Enables zlib compression of individual incoming gateway events.
+payload_compression = ["flate2", "gateway"]
 # Enables zlib-stream transport compression of incoming gateway events.
 transport_compression_zlib = ["flate2", "gateway"]
 # Enables zstd-stream transport compression of incoming gateway events.

@@ -775,6 +775,7 @@ pub struct CollectorCallback(pub Arc<dyn Fn(&Event) -> bool + Send + Sync>);
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum TransportCompression {
+    #[cfg(feature = "payload_compression")]
     /// No transport compression. Payload compression will be used instead.
     None,
 
@@ -788,6 +789,14 @@ pub enum TransportCompression {
 }
 
 impl TransportCompression {
+    pub(crate) fn client_default() -> Self {
+        cfg_select! {
+            feature = "payload_compression" => Self::None,
+            feature = "transport_compression_zlib" => Self::Zlib,
+            feature = "transport_compression_zstd" => Self::Zstd,
+        }
+    }
+
     fn query_param(self) -> ArrayString<21> {
         #[cfg_attr(
             not(any(
@@ -798,6 +807,7 @@ impl TransportCompression {
         )]
         let mut res = ArrayString::new();
         match self {
+            #[cfg(feature = "payload_compression")]
             Self::None => {},
             #[cfg(feature = "transport_compression_zlib")]
             Self::Zlib => aformat_into!(res, "&compress=zlib-stream"),
